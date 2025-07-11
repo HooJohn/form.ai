@@ -1,0 +1,818 @@
+import React, { useState, useEffect } from 'react';
+
+// Tailwind CSS is assumed to be available in the environment.
+// For demonstration, we'll define our color palette based on the design document.
+const colors = {
+  primary: '#1A4D8C', // 深蓝
+  secondary: '#4A90E2', // 浅蓝
+  accent: '#FF9900',   // 橙色
+  background: '#FFFFFF', // 白色
+  text: '#333333',     // 深灰
+  highlight: '#E0F2F7', // 淡蓝色高亮
+};
+
+// Mock Data for Prototype
+const mockTemplates = [
+  {
+    id: 'template_001',
+    schoolLogo: 'https://placehold.co/40x40/4A90E2/FFFFFF?text=PLK',
+    schoolName: '保良局馬錦明夫人章馥仙中學',
+    titleZH: '中一至中四插班生申請表',
+    titleEN: 'Application Form for S1-S4 Transfer Student',
+    grade: '中一至中四',
+    lastUpdated: '2025-07-01',
+    description: '适用于S1-S4插班申请，包含个人、家庭及学业信息。',
+  },
+  {
+    id: 'template_002',
+    schoolLogo: 'https://placehold.co/40x40/FF9900/FFFFFF?text=HKU',
+    schoolName: '香港大學附屬學院',
+    titleZH: '新生入學申請表',
+    titleEN: 'New Student Admission Form',
+    grade: '中六',
+    lastUpdated: '2025-06-15',
+    description: '大學附屬學院入學申請，需提供DSE成績。',
+  },
+  {
+    id: 'template_003',
+    schoolLogo: 'https://placehold.co/40x40/1A4D8C/FFFFFF?text=CCC',
+    schoolName: '中華基督教會協和小學',
+    titleZH: '小一入學申請表',
+    titleEN: 'Primary One Admission Form',
+    grade: '小一',
+    lastUpdated: '2025-07-05',
+    description: '小一學位申請，包含家長資料及面試安排。',
+  },
+];
+
+const mockFormData = {
+  sections: [
+    {
+      id: 'applicant_info',
+      titleZH: 'A. 申請者資料',
+      titleEN: 'A. Applicant Information',
+      fields: [
+        { id: 'english_name', labelZH: '英文姓名', labelEN: 'English Name', value: 'CHEN CHUN YUK VIKE', type: 'text', confidence: 95 },
+        { id: 'chinese_name', labelZH: '中文姓名', labelEN: '中文姓名', value: '陳俊旭', type: 'text', confidence: 95 },
+        { id: 'hkid_number', labelZH: '香港身份證號碼', labelEN: 'HKID Number', value: 'S291164 (9)', type: 'text', confidence: 90 },
+        { id: 'date_of_birth', labelZH: '出生日期', labelEN: 'Date of Birth (DD/MM/YYYY)', value: '04/03/2009', type: 'date', confidence: 85 },
+        { id: 'sex', labelZH: '性別', labelEN: 'Sex', value: '男', type: 'radio', options: ['男', '女'], confidence: 98 },
+        { id: 'place_of_birth', labelZH: '出生地方', labelEN: 'Place of Birth', value: '香港', type: 'text', confidence: 92 },
+        { id: 'nationality', labelZH: '國籍', labelEN: 'Nationality', value: '中國', type: 'text', confidence: 90 },
+        { id: 'home_language', labelZH: '家庭常用語言', labelEN: 'Spoken Language at Home', value: '普通話', type: 'text', confidence: 80 }, // Lower confidence for demo
+        { id: 'mobile_phone', labelZH: '手提電話', labelEN: 'Mobile Phone', value: '67693062', type: 'tel', confidence: 95 },
+        { id: 'residential_address', labelZH: '住址', labelEN: 'Residential Address', value: '香港九龍旺角花園街132-136號友和大樓3C', type: 'textarea', confidence: 88 },
+      ],
+    },
+    {
+      id: 'parent_info',
+      titleZH: 'B. 家長及監護人資料',
+      titleEN: 'B. Parent/Guardian Information',
+      fields: [
+        { id: 'mother_name_zh', labelZH: '母親中文姓名', labelEN: 'Mother Chinese Name', value: '朱金鳳', type: 'text', confidence: 95 },
+        { id: 'mother_occupation', labelZH: '母親職業', labelEN: 'Mother Occupation', value: '醫生', type: 'text', confidence: 90 },
+        { id: 'father_name_zh', labelZH: '父親中文姓名', labelEN: 'Father Chinese Name', value: '陳建波', type: 'text', confidence: 95 },
+        { id: 'father_occupation', labelZH: '父親職業', labelEN: 'Father Occupation', value: '建築工程師', type: 'text', confidence: 90 },
+      ],
+    },
+    {
+      id: 'school_attended',
+      titleZH: 'C. 曾/現正就讀學校名稱',
+      titleEN: 'C. School(s) Attended / Attending',
+      fields: [
+        { id: 'school1_name', labelZH: '學校名稱', labelEN: 'School Name', value: '將軍澳香島中學', type: 'text', confidence: 92 },
+        { id: 'school1_from', labelZH: '由 (月/年)', labelEN: 'From (MM/YYYY)', value: '09/2024', type: 'text', confidence: 90 },
+        { id: 'school1_to', labelZH: '至 (月/年)', labelEN: 'To (MM/YYYY)', value: '07/2025', type: 'text', confidence: 90 },
+        { id: 'school1_grade', labelZH: '級別', labelEN: 'Year Level', value: '中三', type: 'text', confidence: 90 },
+      ],
+    },
+  ],
+};
+
+const mockExtractedInfo = {
+  '我儿子叫张伟，2009年3月4日出生，住在香港九龙旺角花园街132-136号友和大楼3C。': [
+    { label: '姓名 (中文)', value: '张伟' },
+    { label: '出生日期', value: '2009年3月4日' },
+    { label: '地址', value: '香港九龙旺角花园街132-136号友和大楼3C' },
+  ],
+  '我妈妈朱金凤，职业医生。': [
+    { label: '母亲姓名 (中文)', value: '朱金凤' },
+    { label: '母亲职业', value: '医生' },
+  ],
+  '我爸爸陈建波，建筑工程师。': [
+    { label: '父亲姓名 (中文)', value: '陈建波' },
+    { label: '父亲职业', value: '建筑工程师' },
+  ]
+};
+
+// Shared Header Component
+const Header = ({ currentView, setView, language, setLanguage }) => {
+  return (
+    <header className="bg-white shadow-sm py-4 px-6 flex justify-between items-center rounded-b-lg">
+      <div className="flex items-center space-x-4">
+        <h1 className="text-xl font-bold text-primary flex items-center">
+          <span className="text-2xl mr-2">🎓</span> SmartForm AI 2.0
+        </h1>
+        <nav className="hidden md:flex space-x-6">
+          <button onClick={() => setView('templateLibrary')} className={`text-text hover:text-primary font-medium ${currentView === 'templateLibrary' ? 'text-primary' : ''}`}>
+            {language === 'zh-HK' ? '模板庫' : language === 'zh-CN' ? '模板库' : 'Template Library'}
+          </button>
+          <button onClick={() => setView('dashboard')} className={`text-text hover:text-primary font-medium ${currentView === 'dashboard' ? 'text-primary' : ''}`}>
+            {language === 'zh-HK' ? '我的表格' : language === 'zh-CN' ? '我的表格' : 'My Forms'}
+          </button>
+          <button onClick={() => alert('升学顾问服务 - 敬请期待！')} className="text-text hover:text-primary font-medium">
+            {language === 'zh-HK' ? '升學顧問' : language === 'zh-CN' ? '升学顾问' : 'Admission Advisor'}
+          </button>
+          <button onClick={() => alert('帮助中心 - 敬请期待！')} className="text-text hover:text-primary font-medium">
+            {language === 'zh-HK' ? '幫助中心' : language === 'zh-CN' ? '帮助中心' : 'Help Center'}
+          </button>
+        </nav>
+      </div>
+      <div className="flex items-center space-x-4">
+        <select
+          className="p-2 rounded-md border border-gray-300 text-sm text-text"
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+        >
+          <option value="zh-HK">中文繁體</option>
+          <option value="zh-CN">中文简体</option>
+          <option value="en">English</option>
+        </select>
+        <button onClick={() => alert('用户登录/个人中心 - 敬请期待！')} className="flex items-center space-x-2 text-text hover:text-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="hidden md:block">{language === 'zh-HK' ? '登錄' : language === 'zh-CN' ? '登录' : 'Login'}</span>
+        </button>
+      </div>
+    </header>
+  );
+};
+
+// Dashboard Component
+const Dashboard = ({ setView, language }) => {
+  return (
+    <div className="p-8 bg-gray-50 min-h-screen font-sans">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-3xl font-semibold text-primary mb-8">
+          {language === 'zh-HK' ? '歡迎使用 SmartForm AI 2.0' : language === 'zh-CN' ? '欢迎使用 SmartForm AI 2.0' : 'Welcome to SmartForm AI 2.0'}
+        </h2>
+
+        {/* Quick Start */}
+        <div className="bg-white p-8 rounded-xl shadow-lg mb-8 border border-gray-200">
+          <h3 className="text-2xl font-semibold text-text mb-6">
+            {language === 'zh-HK' ? '快速開始' : language === 'zh-CN' ? '快速开始' : 'Quick Start'}
+          </h3>
+          <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6">
+            <button
+              onClick={() => setView('formFilling')}
+              className="flex-1 bg-accent text-white py-4 px-6 rounded-xl text-lg font-bold shadow-md hover:bg-orange-600 transition duration-300 ease-in-out transform hover:scale-105"
+            >
+              {language === 'zh-HK' ? '上載表格開始填寫' : language === 'zh-CN' ? '上传表格开始填写' : 'Upload Form to Start Filling'}
+            </button>
+            <button
+              onClick={() => setView('templateLibrary')}
+              className="flex-1 bg-secondary text-white py-4 px-6 rounded-xl text-lg font-bold shadow-md hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105"
+            >
+              {language === 'zh-HK' ? '從模板庫選擇' : language === 'zh-CN' ? '从模板库选择' : 'Select from Template Library'}
+            </button>
+          </div>
+        </div>
+
+        {/* My Recent Forms */}
+        <div className="bg-white p-8 rounded-xl shadow-lg mb-8 border border-gray-200">
+          <h3 className="text-2xl font-semibold text-text mb-6">
+            {language === 'zh-HK' ? '我的近期表格' : language === 'zh-CN' ? '我的近期表格' : 'My Recent Forms'}
+          </h3>
+          {mockTemplates.slice(0, 2).map((template) => (
+            <div key={template.id} className="flex items-center p-4 mb-4 bg-gray-50 rounded-lg shadow-sm border border-gray-100">
+              <img src={template.schoolLogo} alt="School Logo" className="w-10 h-10 rounded-full mr-4" />
+              <div className="flex-1">
+                <p className="font-semibold text-lg text-text">{language === 'zh-HK' ? template.titleZH : language === 'zh-CN' ? template.titleZH : template.titleEN}</p>
+                <p className="text-sm text-gray-500">{language === 'zh-HK' ? template.schoolName : language === 'zh-CN' ? template.schoolName : template.schoolName} · {language === 'zh-HK' ? '最近編輯' : language === 'zh-CN' ? '最近编辑' : 'Last edited'}: {template.lastUpdated}</p>
+              </div>
+              <button
+                onClick={() => setView('formFilling')}
+                className="bg-primary text-white py-2 px-4 rounded-lg text-sm hover:bg-primary-dark transition duration-200"
+              >
+                {language === 'zh-HK' ? '繼續填寫' : language === 'zh-CN' ? '继续填写' : 'Continue Filling'}
+              </button>
+            </div>
+          ))}
+          <button onClick={() => setView('dashboard')} className="text-primary hover:underline mt-4 text-center block">
+            {language === 'zh-HK' ? '查看所有表格' : language === 'zh-CN' ? '查看所有表格' : 'View All Forms'}
+          </button>
+        </div>
+
+        {/* Recommended Templates */}
+        <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+          <h3 className="text-2xl font-semibold text-text mb-6">
+            {language === 'zh-HK' ? '推薦模板' : language === 'zh-CN' ? '推荐模板' : 'Recommended Templates'}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {mockTemplates.map((template) => (
+              <div key={template.id} className="bg-gray-50 p-5 rounded-lg shadow-sm border border-gray-100 flex flex-col items-start">
+                <img src={template.schoolLogo} alt="School Logo" className="w-12 h-12 rounded-full mb-3" />
+                <h4 className="font-semibold text-lg text-text mb-1">{language === 'zh-HK' ? template.titleZH : language === 'zh-CN' ? template.titleZH : template.titleEN}</h4>
+                <p className="text-sm text-gray-500 mb-3">{language === 'zh-HK' ? template.schoolName : language === 'zh-CN' ? template.schoolName : template.schoolName}</p>
+                <p className="text-sm text-gray-600 mb-4 flex-grow">{template.description}</p>
+                <button
+                  onClick={() => setView('formFilling')}
+                  className="bg-secondary text-white py-2 px-4 rounded-lg text-sm hover:bg-blue-600 transition duration-200 self-end"
+                >
+                  {language === 'zh-HK' ? '開始填寫' : language === 'zh-CN' ? '开始填写' : 'Start Filling'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Template Library Component
+const TemplateLibrary = ({ setView, language }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [filteredTemplates, setFilteredTemplates] = useState(mockTemplates);
+
+  useEffect(() => {
+    let tempTemplates = mockTemplates;
+
+    if (selectedCategory !== 'all') {
+      tempTemplates = tempTemplates.filter(t => t.grade.includes(selectedCategory)); // Simplified filter
+    }
+
+    if (searchTerm) {
+      tempTemplates = tempTemplates.filter(t =>
+        t.schoolName.includes(searchTerm) ||
+        t.titleZH.includes(searchTerm) ||
+        t.titleEN.includes(searchTerm) ||
+        t.description.includes(searchTerm)
+      );
+    }
+    setFilteredTemplates(tempTemplates);
+  }, [searchTerm, selectedCategory]);
+
+  const categories = [
+    { id: 'all', labelZH: '全部', labelEN: 'All' },
+    { id: '中一', labelZH: '中一', labelEN: 'S1' },
+    { id: '小一', labelZH: '小一', labelEN: 'P1' },
+    { id: '中三', labelZH: '中三', labelEN: 'S3' },
+    { id: '中六', labelZH: '中六', labelEN: 'S6' },
+  ];
+
+  return (
+    <div className="p-8 bg-gray-50 min-h-screen font-sans">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-3xl font-semibold text-primary mb-8">
+          {language === 'zh-HK' ? '模板庫' : language === 'zh-CN' ? '模板库' : 'Template Library'}
+        </h2>
+
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Left Sidebar for Filters */}
+          <div className="w-full md:w-1/4 bg-white p-6 rounded-xl shadow-lg border border-gray-200 h-fit">
+            <h3 className="text-xl font-semibold text-text mb-4">
+              {language === 'zh-HK' ? '篩選與分類' : language === 'zh-CN' ? '筛选与分类' : 'Filters & Categories'}
+            </h3>
+            <input
+              type="text"
+              placeholder={language === 'zh-HK' ? '搜索模板...' : language === 'zh-CN' ? '搜索模板...' : 'Search templates...'}
+              className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition duration-200"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="mb-4">
+              <p className="font-medium text-gray-700 mb-2">{language === 'zh-HK' ? '按年級' : language === 'zh-CN' ? '按年级' : 'By Grade'}</p>
+              {categories.map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`block w-full text-left py-2 px-3 rounded-lg text-sm mb-1 transition duration-200 ${selectedCategory === cat.id ? 'bg-primary text-white' : 'text-text hover:bg-gray-100'}`}
+                >
+                  {language === 'zh-HK' ? cat.labelZH : language === 'zh-CN' ? cat.labelZH : cat.labelEN}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Content Area for Templates */}
+          <div className="w-full md:w-3/4">
+            {filteredTemplates.length === 0 ? (
+              <p className="text-center text-gray-600 text-lg mt-10">
+                {language === 'zh-HK' ? '沒有找到相關模板。' : language === 'zh-CN' ? '没有找到相关模板。' : 'No templates found.'}
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                {filteredTemplates.map((template) => (
+                  <div key={template.id} className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex flex-col items-start">
+                    <div className="flex items-center mb-4">
+                      <img src={template.schoolLogo} alt="School Logo" className="w-14 h-14 rounded-full mr-4" />
+                      <div>
+                        <h4 className="font-semibold text-xl text-text">{language === 'zh-HK' ? template.titleZH : language === 'zh-CN' ? template.titleZH : template.titleEN}</h4>
+                        <p className="text-sm text-gray-500">{language === 'zh-HK' ? template.schoolName : language === 'zh-CN' ? template.schoolName : template.schoolName}</p>
+                      </div>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-4 flex-grow">{template.description}</p>
+                    <div className="flex justify-between items-center w-full">
+                      <span className="text-xs text-gray-400">{language === 'zh-HK' ? '更新於' : language === 'zh-CN' ? '更新于' : 'Updated'}: {template.lastUpdated}</span>
+                      <button
+                        onClick={() => setView('formFilling')}
+                        className="bg-primary text-white py-2 px-5 rounded-lg text-sm hover:bg-primary-dark transition duration-200 shadow-md"
+                      >
+                        {language === 'zh-HK' ? '開始填寫' : language === 'zh-CN' ? '开始填写' : 'Start Filling'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Form Filling Component
+const FormFilling = ({ setView, language }) => {
+  const [formData, setFormData] = useState(mockFormData);
+  const [smartInput, setSmartInput] = useState('');
+  const [extractedInfo, setExtractedInfo] = useState([]);
+  const [activeSection, setActiveSection] = useState(mockFormData.sections[0].id);
+
+  const handleFieldChange = (sectionId, fieldId, value) => {
+    setFormData(prevData => {
+      const newSections = prevData.sections.map(section => {
+        if (section.id === sectionId) {
+          const newFields = section.fields.map(field =>
+            field.id === fieldId ? { ...field, value: value } : field
+          );
+          return { ...section, fields: newFields };
+        }
+        return section;
+      });
+      return { ...prevData, sections: newSections };
+    });
+  };
+
+  const handleSmartInputChange = (e) => {
+    const input = e.target.value;
+    setSmartInput(input);
+    // Simulate AI extraction based on input
+    if (mockExtractedInfo[input]) {
+      setExtractedInfo(mockExtractedInfo[input]);
+    } else {
+      setExtractedInfo([]);
+    }
+  };
+
+  const handleExtractAndFill = () => {
+    // Simulate AI filling based on extractedInfo
+    setFormData(prevData => {
+      const newSections = prevData.sections.map(section => {
+        const newFields = section.fields.map(field => {
+          let newValue = field.value;
+          extractedInfo.forEach(info => {
+            // Very simplified matching logic for demo
+            if (field.labelZH.includes(info.label) || field.labelEN.includes(info.label)) {
+              newValue = info.value;
+            }
+          });
+          return { ...field, value: newValue };
+        });
+        return { ...section, fields: newFields };
+      });
+      return { ...prevData, sections: newSections };
+    });
+    setSmartInput(''); // Clear input after filling
+    setExtractedInfo([]); // Clear extracted info
+  };
+
+  const getSectionProgress = (section) => {
+    const totalFields = section.fields.length;
+    if (totalFields === 0) return 100;
+    const filledFields = section.fields.filter(field => field.value && field.value.toString().trim() !== '').length;
+    return Math.round((filledFields / totalFields) * 100);
+  };
+
+  const getUnfilledFields = () => {
+    const unfilled = [];
+    formData.sections.forEach(section => {
+      section.fields.forEach(field => {
+        if (!field.value || field.value.toString().trim() === '') {
+          unfilled.push({
+            sectionId: section.id,
+            fieldId: field.id,
+            label: language === 'zh-HK' ? field.labelZH : language === 'zh-CN' ? field.labelZH : field.labelEN,
+            sectionTitle: language === 'zh-HK' ? section.titleZH : language === 'zh-CN' ? section.titleZH : section.titleEN,
+          });
+        }
+      });
+    });
+    return unfilled;
+  };
+
+  const unfilledFields = getUnfilledFields();
+
+  return (
+    <div className="flex flex-col h-screen bg-gray-50 font-sans">
+      {/* Top Bar for Form Filling */}
+      <div className="bg-white shadow-sm py-3 px-6 flex justify-between items-center border-b border-gray-200">
+        <h2 className="text-lg font-semibold text-primary">
+          {language === 'zh-HK' ? '中一至中四插班生申請表' : language === 'zh-CN' ? '中一至中四插班生申请表' : 'Application Form for S1-S4 Transfer Student'}
+        </h2>
+        <div className="flex items-center space-x-4">
+          <span className="text-sm text-gray-600">{language === 'zh-HK' ? '自動保存' : language === 'zh-CN' ? '自动保存' : 'Auto-saved'}</span>
+          <button onClick={() => alert('保存成功！')} className="bg-gray-200 text-text py-1.5 px-3 rounded-lg text-sm hover:bg-gray-300 transition duration-200">
+            {language === 'zh-HK' ? '手動保存' : language === 'zh-CN' ? '手动保存' : 'Save'}
+          </button>
+        </div>
+      </div>
+
+      {/* Three-Column Work Area */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Nav/Overview */}
+        <div className="w-1/5 bg-white p-6 border-r border-gray-200 overflow-y-auto shadow-md">
+          <h3 className="text-xl font-semibold text-text mb-4">
+            {language === 'zh-HK' ? '表格目錄' : language === 'zh-CN' ? '表格目录' : 'Form Directory'}
+          </h3>
+          {formData.sections.map(section => (
+            <div key={section.id} className="mb-4">
+              <button
+                onClick={() => setActiveSection(section.id)}
+                className={`w-full text-left p-3 rounded-lg text-base font-medium transition duration-200 ${activeSection === section.id ? 'bg-primary text-white' : 'text-text hover:bg-gray-100'}`}
+              >
+                {language === 'zh-HK' ? section.titleZH : language === 'zh-CN' ? section.titleZH : section.titleEN}
+              </button>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div
+                  className="bg-secondary h-2 rounded-full"
+                  style={{ width: `${getSectionProgress(section)}%` }}
+                ></div>
+              </div>
+              <span className="text-xs text-gray-500 block mt-1">{getSectionProgress(section)}% {language === 'zh-HK' ? '完成' : language === 'zh-CN' ? '完成' : 'Complete'}</span>
+            </div>
+          ))}
+
+          <div className="mt-6">
+            <h4 className="text-lg font-semibold text-text mb-3">
+              {language === 'zh-HK' ? '未完成/待確認字段' : language === 'zh-CN' ? '未完成/待确认字段' : 'Unfilled/Pending Fields'}
+            </h4>
+            {unfilledFields.length === 0 ? (
+              <p className="text-sm text-gray-500">{language === 'zh-HK' ? '所有字段已填寫！' : language === 'zh-CN' ? '所有字段已填写！' : 'All fields filled!'}</p>
+            ) : (
+              <ul className="list-disc pl-5 text-sm text-gray-700">
+                {unfilledFields.slice(0, 5).map((field, index) => ( // Show first 5
+                  <li key={index} className="mb-1">
+                    <button onClick={() => {
+                        setActiveSection(field.sectionId);
+                        // In a real app, you'd scroll to the field
+                        alert(`跳转到: ${field.sectionTitle} - ${field.label}`);
+                    }} className="text-secondary hover:underline">
+                      {field.label} ({field.sectionTitle})
+                    </button>
+                  </li>
+                ))}
+                {unfilledFields.length > 5 && (
+                  <li className="text-gray-500">... {language === 'zh-HK' ? '更多' : language === 'zh-CN' ? '更多' : 'more'}</li>
+                )}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        {/* Middle Form Preview & Edit Area */}
+        <div className="flex-1 p-6 overflow-y-auto bg-white shadow-lg">
+          <div className="max-w-3xl mx-auto border border-gray-200 rounded-xl p-8">
+            <h3 className="text-2xl font-bold text-primary mb-6 text-center">
+              {language === 'zh-HK' ? '中一至中四插班生申請表' : language === 'zh-CN' ? '中一至中四插班生申请表' : 'Application Form for S1-S4 Transfer Student'}
+            </h3>
+            <p className="text-sm text-gray-500 mb-8 text-center">
+              {language === 'zh-HK' ? '請點擊高亮區域進行編輯或確認。' : language === 'zh-CN' ? '请点击高亮区域进行编辑或确认。' : 'Click highlighted areas to edit or confirm.'}
+            </p>
+
+            {formData.sections.map(section => (
+              <div key={section.id} className="mb-8 p-6 bg-gray-50 rounded-lg shadow-inner border border-gray-100">
+                <h4 className="text-xl font-semibold text-text mb-5 border-b pb-3 border-gray-200">
+                  {language === 'zh-HK' ? section.titleZH : language === 'zh-CN' ? section.titleZH : section.titleEN}
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-6">
+                  {section.fields.map(field => (
+                    <div key={field.id} className="relative">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {language === 'zh-HK' ? field.labelZH : language === 'zh-CN' ? field.labelZH : field.labelEN}
+                        {field.confidence && field.confidence < 90 && (
+                          <span className="ml-2 text-accent text-xs cursor-pointer group relative">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 text-xs text-white bg-gray-800 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              AI {language === 'zh-HK' ? '識別置信度' : language === 'zh-CN' ? '识别置信度' : 'confidence'}: {field.confidence}%。{language === 'zh-HK' ? '請確認。' : language === 'zh-CN' ? '请确认。' : 'Please confirm.'}
+                            </span>
+                          </span>
+                        )}
+                      </label>
+                      {field.type === 'radio' ? (
+                        <div className="flex space-x-4">
+                          {field.options.map(option => (
+                            <label key={option} className="inline-flex items-center">
+                              <input
+                                type="radio"
+                                className="form-radio text-primary h-4 w-4"
+                                name={field.id}
+                                value={option}
+                                checked={field.value === option}
+                                onChange={(e) => handleFieldChange(section.id, field.id, e.target.value)}
+                              />
+                              <span className="ml-2 text-text">{option}</span>
+                            </label>
+                          ))}
+                        </div>
+                      ) : field.type === 'textarea' ? (
+                        <textarea
+                          className={`w-full p-2 border rounded-lg focus:ring-primary focus:border-primary transition duration-200 ${field.value ? 'bg-highlight border-secondary' : 'border-gray-300'}`}
+                          value={field.value || ''}
+                          onChange={(e) => handleFieldChange(section.id, field.id, e.target.value)}
+                          rows="3"
+                        />
+                      ) : (
+                        <input
+                          type={field.type}
+                          className={`w-full p-2 border rounded-lg focus:ring-primary focus:border-primary transition duration-200 ${field.value ? 'bg-highlight border-secondary' : 'border-gray-300'}`}
+                          value={field.value || ''}
+                          onChange={(e) => handleFieldChange(section.id, field.id, e.target.value)}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {/* Signature Area */}
+            <div className="mb-8 p-6 bg-gray-50 rounded-lg shadow-inner border border-gray-100">
+              <h4 className="text-xl font-semibold text-text mb-5 border-b pb-3 border-gray-200">
+                {language === 'zh-HK' ? 'G. 聲明' : language === 'zh-CN' ? 'G. 声明' : 'G. Declaration'}
+              </h4>
+              <p className="text-gray-700 text-sm mb-4">
+                {language === 'zh-HK' ? '本人謹此聲明...' : language === 'zh-CN' ? '本人谨此声明...' : 'I declare...'}
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {language === 'zh-HK' ? '學生簽署' : language === 'zh-CN' ? '学生签署' : 'Signature of Applicant'}
+                  </label>
+                  <button onClick={() => alert('簽名板功能 - 敬請期待！')} className="w-full bg-white border border-gray-300 rounded-lg py-8 text-gray-400 flex items-center justify-center hover:bg-gray-100 transition duration-200">
+                    {language === 'zh-HK' ? '點擊簽名或上傳圖片' : language === 'zh-CN' ? '点击签名或上传图片' : 'Click to Sign or Upload Image'}
+                  </button>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {language === 'zh-HK' ? '家長/監護人簽署' : language === 'zh-CN' ? '家长/监护人签署' : 'Signature of Parent/Guardian'}
+                  </label>
+                  <button onClick={() => alert('簽名板功能 - 敬请期待！')} className="w-full bg-white border border-gray-300 rounded-lg py-8 text-gray-400 flex items-center justify-center hover:bg-gray-100 transition duration-200">
+                    {language === 'zh-HK' ? '點擊簽名或上傳圖片' : language === 'zh-CN' ? '点击签名或上传图片' : 'Click to Sign or Upload Image'}
+                  </button>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {language === 'zh-HK' ? '家長/監護人姓名' : language === 'zh-CN' ? '家长/监护人姓名' : 'Name of Parent/Guardian'}
+                  </label>
+                  <input
+                    type="text"
+                    className={`w-full p-2 border rounded-lg focus:ring-primary focus:border-primary transition duration-200 ${formData.sections[1].fields.find(f => f.id === 'father_name_zh')?.value ? 'bg-highlight border-secondary' : 'border-gray-300'}`}
+                    value={formData.sections[1].fields.find(f => f.id === 'father_name_zh')?.value || ''}
+                    onChange={(e) => handleFieldChange('parent_info', 'father_name_zh', e.target.value)} // Assuming father is guardian for demo
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {language === 'zh-HK' ? '日期' : language === 'zh-CN' ? '日期' : 'Date'}
+                  </label>
+                  <input
+                    type="date"
+                    className="w-full p-2 border rounded-lg focus:ring-primary focus:border-primary transition duration-200 bg-highlight border-secondary"
+                    value="2025-07-11" // Mock current date
+                    onChange={() => {}} // Not editable for demo
+                  />
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Right Smart Assistant/Input Area */}
+        <div className="w-1/4 bg-white p-6 border-l border-gray-200 overflow-y-auto shadow-md">
+          <h3 className="text-xl font-semibold text-text mb-4">
+            {language === 'zh-HK' ? '智能助手' : language === 'zh-CN' ? '智能助手' : 'Smart Assistant'}
+          </h3>
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {language === 'zh-HK' ? '自然語言輸入' : language === 'zh-CN' ? '自然语言输入' : 'Natural Language Input'}
+            </label>
+            <textarea
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition duration-200"
+              rows="6"
+              placeholder={language === 'zh-HK' ? '請描述您的信息，如：我兒子叫張偉，2009年3月4日出生...' : language === 'zh-CN' ? '请描述您的信息，如：我儿子叫张伟，2009年3月4日出生...' : 'Describe your information, e.g., My son is John, born on March 4, 2009...'}
+              value={smartInput}
+              onChange={handleSmartInputChange}
+            ></textarea>
+            <button
+              onClick={handleExtractAndFill}
+              className="mt-3 w-full bg-primary text-white py-2 rounded-lg font-semibold hover:bg-primary-dark transition duration-200 shadow-md"
+            >
+              {language === 'zh-HK' ? 'AI 自動填充' : language === 'zh-CN' ? 'AI 自动填充' : 'AI Auto-Fill'}
+            </button>
+          </div>
+
+          {extractedInfo.length > 0 && (
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="text-lg font-semibold text-blue-800 mb-3">
+                {language === 'zh-HK' ? 'AI 提取信息' : language === 'zh-CN' ? 'AI 提取信息' : 'AI Extracted Info'}
+              </h4>
+              {extractedInfo.map((item, index) => (
+                <div key={index} className="flex justify-between items-center text-sm text-blue-700 mb-1">
+                  <span>{item.label}:</span>
+                  <span className="font-medium">{item.value}</span>
+                  <button onClick={() => alert('编辑提取信息 - 敬请期待！')} className="text-blue-500 hover:text-blue-700 ml-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+            <h4 className="text-lg font-semibold text-yellow-800 mb-3">
+              {language === 'zh-HK' ? '常見問題/缺失信息提示' : language === 'zh-CN' ? '常见问题/缺失信息提示' : 'Common Issues/Missing Info'}
+            </h4>
+            {unfilledFields.length === 0 ? (
+              <p className="text-sm text-yellow-700">{language === 'zh-HK' ? '表格已基本填寫完整，請仔細校對。' : language === 'zh-CN' ? '表格已基本填写完整，请仔细校对。' : 'Form is mostly complete, please review carefully.'}</p>
+            ) : (
+              <ul className="list-disc pl-5 text-sm text-yellow-700">
+                {unfilledFields.slice(0, 3).map((field, index) => (
+                  <li key={index} className="mb-1">
+                    {language === 'zh-HK' ? '請填寫' : language === 'zh-CN' ? '请填写' : 'Please fill in'}: {field.label} ({field.sectionTitle})
+                  </li>
+                ))}
+                {unfilledFields.length > 3 && (
+                  <li className="text-yellow-700">... {language === 'zh-HK' ? '還有更多' : language === 'zh-CN' ? '还有更多' : 'more'}</li>
+                )}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Action Bar */}
+      <div className="bg-white shadow-lg py-4 px-6 flex justify-between items-center border-t border-gray-200 rounded-t-lg">
+        <button onClick={() => alert('保存成功！')} className="bg-gray-200 text-text py-2 px-4 rounded-lg font-semibold hover:bg-gray-300 transition duration-200">
+          {language === 'zh-HK' ? '保存草稿' : language === 'zh-CN' ? '保存草稿' : 'Save Draft'}
+        </button>
+        <div className="flex space-x-4">
+          <button onClick={() => alert('人工審核服務 - 敬請期待！')} className="bg-secondary text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-600 transition duration-200 shadow-md">
+            {language === 'zh-HK' ? '人工審核' : language === 'zh-CN' ? '人工审核' : 'Human Review'}
+          </button>
+          <button onClick={() => setView('exportPrint')} className="bg-accent text-white py-2 px-4 rounded-lg font-semibold hover:bg-orange-600 transition duration-300 shadow-md">
+            {language === 'zh-HK' ? '導出/打印' : language === 'zh-CN' ? '导出/打印' : 'Export/Print'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Export/Print Component (Simplified for prototype)
+const ExportPrint = ({ setView, language }) => {
+  const [format, setFormat] = useState('pdf');
+
+  return (
+    <div className="p-8 bg-gray-50 min-h-screen font-sans flex items-center justify-center">
+      <div className="bg-white p-10 rounded-xl shadow-lg border border-gray-200 max-w-2xl w-full">
+        <h2 className="text-3xl font-semibold text-primary mb-8 text-center">
+          {language === 'zh-HK' ? '導出與打印' : language === 'zh-CN' ? '导出与打印' : 'Export & Print'}
+        </h2>
+
+        <div className="mb-6">
+          <label className="block text-lg font-medium text-gray-700 mb-3">
+            {language === 'zh-HK' ? '選擇導出格式' : language === 'zh-CN' ? '选择导出格式' : 'Select Export Format'}
+          </label>
+          <div className="flex space-x-6">
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                className="form-radio text-primary h-5 w-5"
+                name="exportFormat"
+                value="pdf"
+                checked={format === 'pdf'}
+                onChange={(e) => setFormat(e.target.value)}
+              />
+              <span className="ml-2 text-lg text-text">PDF ({language === 'zh-HK' ? '高清打印版' : language === 'zh-CN' ? '高清打印版' : 'High-Res Print'})</span>
+            </label>
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                className="form-radio text-primary h-5 w-5"
+                name="exportFormat"
+                value="image"
+                checked={format === 'image'}
+                onChange={(e) => setFormat(e.target.value)}
+              />
+              <span className="ml-2 text-lg text-text">PNG/JPG ({language === 'zh-HK' ? '圖片格式' : language === 'zh-CN' ? '图片格式' : 'Image Format'})</span>
+            </label>
+          </div>
+        </div>
+
+        <div className="mb-8">
+          <label className="block text-lg font-medium text-gray-700 mb-3">
+            {language === 'zh-HK' ? '分享設置' : language === 'zh-CN' ? '分享设置' : 'Share Settings'}
+          </label>
+          <div className="flex items-center">
+            <input type="checkbox" className="form-checkbox h-5 w-5 text-primary rounded" />
+            <span className="ml-2 text-lg text-text">{language === 'zh-HK' ? '生成分享鏈接 (可設置密碼)' : language === 'zh-CN' ? '生成分享链接 (可设置密码)' : 'Generate Shareable Link (with password option)'}</span>
+          </div>
+        </div>
+
+        <div className="text-center">
+          <button
+            onClick={() => alert(`${language === 'zh-HK' ? '已生成' : language === 'zh-CN' ? '已生成' : 'Generated'} ${format.toUpperCase()} ${language === 'zh-HK' ? '文件！' : language === 'zh-CN' ? '文件！' : 'file!'}`)}
+            className="bg-accent text-white py-3 px-8 rounded-lg text-xl font-bold shadow-md hover:bg-orange-600 transition duration-300 ease-in-out transform hover:scale-105 mr-4"
+          >
+            {language === 'zh-HK' ? '確認導出' : language === 'zh-CN' ? '确认导出' : 'Confirm Export'}
+          </button>
+          <button
+            onClick={() => setView('formFilling')}
+            className="bg-gray-300 text-gray-800 py-3 px-8 rounded-lg text-xl font-bold shadow-md hover:bg-gray-400 transition duration-300 ease-in-out transform hover:scale-105"
+          >
+            {language === 'zh-HK' ? '返回' : language === 'zh-CN' ? '返回' : 'Back'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Footer Component
+const Footer = ({ language }) => {
+  return (
+    <footer className="bg-primary text-white py-6 px-6 text-center text-sm rounded-t-lg shadow-inner">
+      <div className="max-w-7xl mx-auto">
+        <p className="mb-2">
+          &copy; {new Date().getFullYear()} SmartForm AI 2.0. {language === 'zh-HK' ? '版權所有。' : language === 'zh-CN' ? '版权所有。' : 'All rights reserved.'}
+        </p>
+        <p className="mb-2">
+          {language === 'zh-HK' ? '由 [您的公司名稱] 開發。' : language === 'zh-CN' ? '由 [您的公司名称] 开发。' : 'Developed by [Your Company Name].'}
+        </p>
+        <div className="flex justify-center space-x-4 mt-3">
+          <a href="#" className="text-white hover:text-secondary transition duration-200">
+            {language === 'zh-HK' ? '關於我們' : language === 'zh-CN' ? '关于我们' : 'About Us'}
+          </a>
+          <span className="text-gray-400">|</span>
+          <a href="#" className="text-white hover:text-secondary transition duration-200">
+            {language === 'zh-HK' ? '私隱政策' : language === 'zh-CN' ? '隐私政策' : 'Privacy Policy'}
+          </a>
+          <span className="text-gray-400">|</span>
+          <a href="#" className="text-white hover:text-secondary transition duration-200">
+            {language === 'zh-HK' ? '服務條款' : language === 'zh-CN' ? '服务条款' : 'Terms of Service'}
+          </a>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+// Main App Component
+export default function App() {
+  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'templateLibrary', 'formFilling', 'exportPrint'
+  const [language, setLanguage] = useState('zh-HK'); // 'zh-HK', 'zh-CN', 'en'
+
+  const renderView = () => {
+    switch (currentView) {
+      case 'dashboard':
+        return <Dashboard setView={setCurrentView} language={language} />;
+      case 'templateLibrary':
+        return <TemplateLibrary setView={setCurrentView} language={language} />;
+      case 'formFilling':
+        return <FormFilling setView={setCurrentView} language={language} />;
+      case 'exportPrint':
+        return <ExportPrint setView={setCurrentView} language={language} />;
+      default:
+        return <Dashboard setView={setCurrentView} language={language} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header currentView={currentView} setView={setCurrentView} language={language} setLanguage={setLanguage} />
+      <main className="flex-1 overflow-auto">
+        {renderView()}
+      </main>
+      <Footer language={language} /> {/* Added Footer component here */}
+    </div>
+  );
+}
