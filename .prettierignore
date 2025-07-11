@@ -1,0 +1,15 @@
+node_modules
+dist
+coverage
+*.log
+
+# Build artifacts
+src/frontend/dist
+src/frontend/node_modules
+src/backend/dist
+src/backend/node_modules
+
+# Config files that Prettier might not format well or are auto-generated
+# webpack.config.js
+# postcss.config.js
+# tailwind.config.js

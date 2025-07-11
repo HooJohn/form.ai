@@ -1,0 +1,2 @@
+# For API call functions, organized by resource or service
+# e.g., authService.ts, templateService.ts, formService.ts
