@@ -31,8 +31,20 @@ app.get('/api/health', (req: Request, res: Response) => {
 });
 
 // Placeholder for future API routes
-// Example: app.use('/api/users', userRoutes);
-// Example: app.use('/api/forms', formRoutes);
+import authRoutes from './routes/auth.routes';
+import templateRoutes from './routes/template.routes';
+import formRoutes from './routes/form.routes';
+import aiRoutes from './routes/ai.routes';
+import feedbackRoutes from './routes/feedback.routes';
+import reportRoutes from './routes/report.routes';
+import userRoutes from './routes/user.routes';
+app.use('/api/auth', authRoutes);
+app.use('/api/templates', templateRoutes);
+app.use('/api/forms', formRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/users', userRoutes);
 
 // Catch-all for 404 Not Found errors
 app.use((req: Request, res: Response, next: NextFunction) => {

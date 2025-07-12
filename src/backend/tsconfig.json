@@ -2,25 +2,19 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
-    "rootDir": "./src",
+    "rootDir": "..", // Set rootDir to the parent ('src') to include 'common'
     "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "baseUrl": "./src", // Base URL for backend source files
+    "baseUrl": "..", // Set baseUrl to the parent ('src')
     "paths": {
-      "@common/*": ["../../common/*"], // Adjusted path to common
-      "@config/*": ["config/*"],
-      "@controllers/*": ["controllers/*"],
-      "@middlewares/*": ["middlewares/*"],
-      "@models/*": ["models/*"],
-      "@routes/*": ["routes/*"],
-      "@services/*": ["services/*"],
-      "@utils/*": ["utils/*"]
+      "@common/*": ["common/*"], // Now common is a direct child
+      "@backend/*": ["backend/src/*"] // Alias for backend specific code
     },
     "resolveJsonModule": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["../**/*"], // Include everything under 'src'
+  "exclude": ["node_modules", "dist", "../frontend"] // Exclude node_modules, dist and frontend
 }

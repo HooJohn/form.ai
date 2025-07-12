@@ -13,18 +13,19 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
+    "noEmit": false,
     "jsx": "react-jsx",
     "baseUrl": "./src", // Base URL for frontend source files
     "paths": {
-      "@common/*": ["../../common/*"], // Adjusted path to common
+      "@common/*": ["common/*"],
       "@components/*": ["components/*"],
       "@pages/*": ["pages/*"],
       "@hooks/*": ["hooks/*"],
       "@services/*": ["services/*"],
       "@utils/*": ["utils/*"],
       "@assets/*": ["assets/*"],
-      "@styles/*": ["styles/*"]
+      "@styles/*": ["styles/*"],
+      "@contexts/*": ["contexts/*"] // Add alias for contexts
     }
   },
   "include": ["src", "tailwind.config.js", "postcss.config.js", "webpack.config.js"],

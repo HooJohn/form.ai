@@ -9,7 +9,7 @@ module.exports = (env, argv) => {
     entry: './src/index.tsx',
     output: {
       path: path.resolve(__dirname, 'dist'),
-      filename: isProduction ? 'static/js/[name].[contenthash:8].js' : 'static/js/bundle.js',
+      filename: isProduction ? 'static/js/[name].[contenthash:8].js' : 'static/js/[name].bundle.js',
       chunkFilename: isProduction ? 'static/js/[name].[contenthash:8].chunk.js' : 'static/js/[name].chunk.js',
       publicPath: '/',
       clean: true, // Clean the output directory before emit.
@@ -17,7 +17,7 @@ module.exports = (env, argv) => {
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx'],
       alias: {
-        '@common': path.resolve(__dirname, '../common'),
+        '@common': path.resolve(__dirname, './src/common'),
         '@components': path.resolve(__dirname, './src/components'),
         '@pages': path.resolve(__dirname, './src/pages'),
         '@hooks': path.resolve(__dirname, './src/hooks'),
@@ -33,7 +33,12 @@ module.exports = (env, argv) => {
         {
           test: /\.(ts|tsx)$/,
           exclude: /node_modules/,
-          use: 'ts-loader',
+          use: {
+            loader: 'ts-loader',
+            options: {
+              configFile: 'tsconfig.json'
+            }
+          },
         },
         {
           test: /\.css$/,
@@ -65,6 +70,7 @@ module.exports = (env, argv) => {
     devServer: {
       static: {
         directory: path.join(__dirname, 'public'),
+        serveIndex: false, // 禁用目录列表
       },
       compress: true,
       port: 3000,
