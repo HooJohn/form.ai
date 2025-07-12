@@ -4,15 +4,23 @@ import AuthPage from '../pages/AuthPage';
 import TemplateLibraryPage from '../pages/TemplateLibraryPage';
 import FormFillingPage from '../pages/FormFillingPage';
 import MainLayout from '../components/layout/MainLayout';
+import PublicLayout from '../components/layout/PublicLayout'; // Import new layout
 import DashboardPage from '../pages/DashboardPage';
 import PricingPage from '../pages/PricingPage';
 import UserCenterPage from '../pages/UserCenterPage';
-import LandingPage from '../pages/LandingPage'; // Import the new landing page
+import LandingPage from '../pages/LandingPage';
 
-// A component to wrap routes that should use the main layout for logged-in users
-const AppLayout = () => (
+// Layout for public-facing pages
+const PublicRoutes = () => (
+  <PublicLayout>
+    <Outlet />
+  </PublicLayout>
+);
+
+// Layout for internal application pages (requires login)
+const AppRoutes = () => (
   <MainLayout>
-    <Outlet /> {/* This will render the matched child route */}
+    <Outlet />
   </MainLayout>
 );
 
@@ -20,25 +28,26 @@ const AppRouter = () => {
   return (
     <Router>
       <Routes>
-        {/* Publicly accessible routes */}
-        <Route path="/" element={<LandingPage />} />
+        {/* Public Routes */}
+        <Route element={<PublicRoutes />}>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+        </Route>
+
+        {/* Standalone Auth Page */}
         <Route path="/auth" element={<AuthPage />} />
-        
-        {/* Routes that use the MainLayout, intended for logged-in users */}
-        <Route element={<AppLayout />}>
+
+        {/* Protected App Routes */}
+        <Route element={<AppRoutes />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/templates" element={<TemplateLibraryPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
           <Route path="/account" element={<UserCenterPage />} />
         </Route>
         
         {/* Form filling page might have its own layout, but for now uses a fragment */}
-        {/* In a real app, this would also be protected */}
         <Route path="/forms/:formId" element={<FormFillingPage />} />
         
-        {/* Fallback route can redirect to landing page or a 404 component */}
         <Route path="*" element={<Navigate to="/" />} /> 
-        
       </Routes>
     </Router>
   );

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { Link } from 'react-router-dom';
 
 const pricingTiers = [
   {
@@ -21,7 +22,7 @@ const pricingTiers = [
     features: [
       { 'zh-HK': '無限次填寫', 'zh-CN': '无限次填写', 'en': 'Unlimited Form Fills' },
       { 'zh-HK': '高級模板庫', 'zh-CN': '高级模板库', 'en': 'Advanced Template Library' },
-      { 'zh-HK': 'AI 升學報告 (摘要)', 'zh-CN': 'AI 升学报告 (摘要)', 'en': 'AI Report Summary' },
+      { 'zh-HK': 'AI 升學報告', 'zh-CN': 'AI 升学报告', 'en': 'AI Admissions Reports' },
       { 'zh-HK': '高清 PDF 導出', 'zh-CN': '高清 PDF 导出', 'en': 'High-Res PDF Export' },
     ],
     cta: { 'zh-HK': '選擇專業版', 'zh-CN': '选择专业版', 'en': 'Choose Pro' },
@@ -35,7 +36,7 @@ const pricingTiers = [
       { 'zh-HK': '專業版所有功能', 'zh-CN': '专业版所有功能', 'en': 'All Professional Features' },
       { 'zh-HK': '最多 3 位成員共享', 'zh-CN': '最多 3 位成员共享', 'en': 'Up to 3 Members' },
       { 'zh-HK': '每月 1 次人工審核', 'zh-CN': '每月 1 次人工审核', 'en': '1 Human Review per Month' },
-      { 'zh-HK': '升學顧問諮詢', 'zh-CN': '升学顾问咨询', 'en': 'Admission Advisor Chat' },
+      { 'zh-HK': '升學顧問諮詢', 'zh-CN': '升学���问咨询', 'en': 'Admission Advisor Chat' },
     ],
     cta: { 'zh-HK': '選擇家庭版', 'zh-CN': '选择家庭版', 'en': 'Choose Family' },
     isFeatured: false,
@@ -46,47 +47,50 @@ const PricingPage = () => {
   const { t } = useLanguage();
 
   return (
-    <div className="bg-gray-50 py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-            {t({ 'zh-HK': '選擇適合您的方案', 'zh-CN': '选择适合您的方案', 'en': 'Choose the Right Plan for You' })}
-          </h2>
-          <p className="mt-4 text-lg text-gray-500">
-            {t({ 'zh-HK': '從免費開始，隨時升級。', 'zh-CN': '从免费开始，随时升级。', 'en': 'Start for free, upgrade anytime.' })}
+    <div className="bg-white py-20 sm:py-28">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-base font-semibold leading-7 text-blue-600">{t({ 'zh-HK': '定價', 'zh-CN': '定价', 'en': 'Pricing' })}</h2>
+          <p className="mt-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+            {t({ 'zh-HK': '選擇適合您的方案', 'zh-CN': '选择适合您的方案', 'en': 'The Right Plan for You' })}
           </p>
         </div>
-
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <p className="mx-auto mt-6 max-w-2xl text-center text-lg leading-8 text-gray-600">
+          {t({ 'zh-HK': '從免費開始，體驗核心功能，並可隨時升級以解鎖更強大的AI能力。', 'zh-CN': '从免费开始，体验核心功能，并可随时升级以解锁更强大的AI能力。', 'en': 'Start for free to experience core features, and upgrade anytime to unlock more powerful AI capabilities.' })}
+        </p>
+        
+        <div className="isolate mx-auto mt-16 grid max-w-md grid-cols-1 gap-8 lg:mx-0 lg:max-w-none lg:grid-cols-3">
           {pricingTiers.map((tier) => (
             <div
               key={t(tier.name)}
-              className={`rounded-lg shadow-lg p-8 flex flex-col ${tier.isFeatured ? 'bg-blue-600 text-white' : 'bg-white'}`}
+              className={`rounded-3xl p-8 ring-1 xl:p-10 ${tier.isFeatured ? 'bg-gray-900 ring-gray-900' : 'ring-gray-200'}`}
             >
-              <h3 className={`text-2xl font-semibold ${tier.isFeatured ? '' : 'text-gray-900'}`}>{t(tier.name)}</h3>
-              <div className="mt-4">
-                <span className="text-4xl font-extrabold">{t(tier.price)}</span>
-                <span className={`ml-2 text-lg ${tier.isFeatured ? 'text-blue-200' : 'text-gray-500'}`}>{t(tier.priceDetail)}</span>
-              </div>
-              <ul className="mt-6 space-y-4 flex-grow">
-                {tier.features.map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    <svg className={`flex-shrink-0 h-6 w-6 ${tier.isFeatured ? 'text-blue-300' : 'text-green-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="ml-3">{t(feature)}</span>
-                  </li>
-                ))}
-              </ul>
-              <button
-                className={`mt-8 w-full py-3 px-6 text-lg font-semibold rounded-lg transition-transform transform hover:scale-105 ${
+              <h3 className={`text-lg font-semibold leading-8 ${tier.isFeatured ? 'text-white' : 'text-gray-900'}`}>{t(tier.name)}</h3>
+              <p className={`mt-4 text-sm leading-6 ${tier.isFeatured ? 'text-gray-300' : 'text-gray-600'}`}>{t(tier.priceDetail)}</p>
+              <p className="mt-6 flex items-baseline gap-x-1">
+                <span className={`text-4xl font-bold tracking-tight ${tier.isFeatured ? 'text-white' : 'text-gray-900'}`}>{t(tier.price)}</span>
+              </p>
+              <Link
+                to="/auth"
+                aria-describedby={t(tier.name)}
+                className={`mt-6 block rounded-md py-3 px-3 text-center text-base font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
                   tier.isFeatured
-                    ? 'bg-white text-blue-600 hover:bg-blue-50'
-                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                    ? 'bg-white text-gray-900 hover:bg-gray-200 focus-visible:outline-white'
+                    : 'bg-blue-600 text-white shadow-sm hover:bg-blue-500 focus-visible:outline-blue-600'
                 }`}
               >
                 {t(tier.cta)}
-              </button>
+              </Link>
+              <ul className={`mt-8 space-y-3 text-sm leading-6 xl:mt-10 ${tier.isFeatured ? 'text-gray-300' : 'text-gray-600'}`}>
+                {tier.features.map((feature) => (
+                  <li key={t(feature)} className="flex gap-x-3">
+                    <svg className={`h-6 w-5 flex-none ${tier.isFeatured ? 'text-white' : 'text-blue-600'}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.052-.143z" clipRule="evenodd" />
+                    </svg>
+                    {t(feature)}
+                  </li>
+                ))}
+              </ul>
             </div>
           ))}
         </div>
