@@ -1,0 +1,5 @@
+# For components specific to a feature.
+# Subdirectories can be created here, e.g.,
+# /form (for FormCard, FormFieldRenderer, etc.)
+# /template (for TemplateCard, TemplateFilter, etc.)
+# /user (for UserProfileForm, etc.)

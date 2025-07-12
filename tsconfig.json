@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@common/*": ["src/common/*"],
+      "@frontend/*": ["src/frontend/*"],
+      "@backend/*": ["src/backend/*"]
+    },
+    "resolveJsonModule": true // Added to allow importing JSON files if needed
+  },
+  "include": ["src/**/*", ".eslintrc.js", ".prettierrc.js"], // Include lint/prettier configs
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/frontend", // Frontend has its own tsconfig
+    "src/backend/dist" // Backend build output
+   ]
+}
