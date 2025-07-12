@@ -2,8 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import * as userService from '../services/user.service';
-import { UserProfile, UserRegistrationData } from '@common/types';
-import { LanguageCode, UserRole } from '@common/types/Shared';
+import { UserProfile, UserRegistrationData } from '../common/types';
+import { LanguageCode, UserRole } from '../common/types/Shared';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {

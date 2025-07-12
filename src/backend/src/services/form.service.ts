@@ -1,4 +1,4 @@
-import { FilledForm, FormTemplate, FilledFormStatus } from '@common/types';
+import { FilledForm, FormTemplate, FilledFormStatus } from '../common/types';
 import { findTemplateById } from './template.service';
 import { v4 as uuidv4 } from 'uuid';
 

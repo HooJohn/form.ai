@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { getForm, updateForm } from '../services/form.service';
 import * as feedbackService from '../services/feedback.service';
 import * as reportService from '../services/report.service';
-import { FilledForm, FormSection, FormField, ExtractedInfoItem, LocalizedString } from '@common/types';
+import { FilledForm, FormSection, FormField, ExtractedInfoItem, LocalizedString } from './../common/types';
 import { debounce } from 'lodash';
 import SmartAssistant from '../components/feature/Form/SmartAssistant';
 import Modal from '../components/shared/Modal';

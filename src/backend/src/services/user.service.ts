@@ -1,4 +1,4 @@
-import { UserProfile, UserRegistrationData } from '@common/types';
+import { UserProfile, UserRegistrationData } from '@backend/common/types';
 import { v4 as uuidv4 } from 'uuid';
 
 // In-memory array to simulate a database

@@ -1,4 +1,4 @@
-import { FormTemplate, ApplicationType } from '@common/types';
+import { FormTemplate, ApplicationType } from '../common/types';
 
 // Mock Data based on the frontend prototype
 const mockTemplates: FormTemplate[] = [

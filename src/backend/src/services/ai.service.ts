@@ -1,5 +1,5 @@
-import { ExtractedInfoItem } from '@common/types';
-import { FormSection } from '@common/types';
+import { ExtractedInfoItem } from '@backend/common/types';
+import { FormSection } from '@backend/common/types';
 import { spawn } from 'child_process';
 import path from 'path';
 import { GoogleGenerativeAI } from '@google/generative-ai';

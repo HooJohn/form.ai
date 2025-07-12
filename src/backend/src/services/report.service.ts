@@ -1,4 +1,4 @@
-import { FilledForm } from '@common/types';
+import { FilledForm } from '@backend/common/types';
 import * as formService from './form.service';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
