@@ -115,8 +115,8 @@ const HowItWorksSection = () => {
   const steps = [
     {
       icon: <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>,
-      title: { 'zh-HK': '1. 上傳表格', 'zh-CN': '1. 上传表格', 'en': '1. Upload Form' },
-      description: { 'zh-HK': '支持PDF、圖片、掃描件。我們的AI能自動識別表格結構。', 'zh-CN': '支持PDF、图片、扫描件。我们的AI能自动识别表格结构。', 'en': 'Supports PDF, images, and scans. Our AI automatically recognizes the form structure.' }
+      title: { 'zh-HK': '1. 智能識別表格', 'zh-CN': '1. 智能识别表格', 'en': '1. Smart Form Recognition' },
+      description: { 'zh-HK': '上傳任何PDF或圖片。AI能自動識別表格結構，包括文字欄位、選擇框及照片位置。', 'zh-CN': '上传任何PDF或图片。AI能自动识别表格结构，包括文本字段、选择框及照片位置。', 'en': 'Upload any PDF or image. Our AI automatically recognizes the form structure, including text fields, checkboxes, and photo placeholders.' }
     },
     {
       icon: <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>,
@@ -124,9 +124,14 @@ const HowItWorksSection = () => {
       description: { 'zh-HK': '只需用自然語言提供信息，AI即可為您自動填寫，省時又準確。', 'zh-CN': '只需用自然语言提供信息，AI即可为您自动填写，省时又准确。', 'en': 'Just provide your info in natural language, and AI will fill it out for you, saving time and ensuring accuracy.' }
     },
     {
+      icon: <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>,
+      title: { 'zh-HK': '3. 簽名與附件', 'zh-CN': '3. 签名与附件', 'en': '3. Sign & Attach' },
+      description: { 'zh-HK': '輕鬆手寫電子簽名，並上傳指定尺寸的證件照片，完美符合學校要求。', 'zh-CN': '轻松手写电子签名，并上传指定尺寸的证件照片，完美符合学校要求。', 'en': 'Easily add your handwritten electronic signature and upload ID photos resized to exact dimensions, perfectly meeting school requirements.' }
+    },
+    {
       icon: <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>,
-      title: { 'zh-HK': '3. 導出與打印', 'zh-CN': '3. 导出与打印', 'en': '3. Export & Print' },
-      description: { 'zh-HK': '一鍵生成高��PDF文件，完美還原原表格格式，隨時打印或提交。', 'zh-CN': '一键生成高清PDF文件，完美还原原表格格式，随时打印或提交。', 'en': 'Generate high-resolution PDFs with one click, perfectly matching the original format.' }
+      title: { 'zh-HK': '4. 導出與打印', 'zh-CN': '4. 导出与打印', 'en': '4. Export & Print' },
+      description: { 'zh-HK': '一鍵生成高清PDF文件，完美還原原表格格式，隨時打印或提交。', 'zh-CN': '一键生成高清PDF文件，完美还原原表格格式，随时打印或提交。', 'en': 'Generate high-resolution PDFs with one click, perfectly matching the original format.' }
     }
   ];
 
@@ -134,24 +139,24 @@ const HowItWorksSection = () => {
     <div id="features" className="py-24 bg-accent">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="lg:text-center">
-          <h2 className="text-base font-semibold tracking-wide uppercase text-primary">{t({ 'zh-HK': '運作方式', 'zh-CN': '运作方式', 'en': 'How It Works' })}</h2>
+          <h2 className="text-base font-semibold tracking-wide uppercase text-primary">{t({ 'zh-HK': '核心功能', 'zh-CN': '核心功能', 'en': 'Core Features' })}</h2>
           <p className="mt-2 text-4xl leading-8 font-extrabold tracking-tight text-text-primary sm:text-5xl">
-            {t({ 'zh-HK': '三步輕鬆完成', 'zh-CN': '三步轻松完成', 'en': 'Effortless in Three Steps' })}
+            {t({ 'zh-HK': '強大功能，一目了然', 'zh-CN': '强大功能，一目了然', 'en': 'Powerful Features at a Glance' })}
           </p>
         </div>
         <div className="mt-20">
-          <div className="grid md:grid-cols-3 md:gap-x-8 md:gap-y-10">
+          <div className="grid md:grid-cols-1 lg:grid-cols-4 md:gap-x-8 md:gap-y-10">
             {steps.map((step, index) => (
               <div key={t(step.title)} className="relative">
-                <div className="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-lg">
-                  <div className="flex items-center justify-center h-20 w-20 rounded-full bg-primary/10 text-primary mb-6">
+                <div className="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-lg h-full">
+                  <div className="flex-shrink-0 flex items-center justify-center h-20 w-20 rounded-full bg-primary/10 text-primary mb-6">
                     {step.icon}
                   </div>
                   <h3 className="text-2xl font-semibold text-accent-green mb-3">{t(step.title)}</h3>
                   <p className="text-text-secondary text-lg">{t(step.description)}</p>
                 </div>
                 {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2">
+                  <div className="hidden lg:block absolute top-1/2 -right-4 transform -translate-y-1/2">
                     <svg className="h-8 w-8 text-secondary/30" fill="currentColor" viewBox="0 0 32 32">
                       <path d="M12.96,2.16a1.49,1.49,0,0,1,2.08,0l14.4,12a1.5,1.5,0,0,1,0,2.68l-14.4,12a1.49,1.49,0,0,1-2.08,0L-1.44,17.84a1.5,1.5,0,0,1,0-2.68Z" transform="translate(1.44 -1.5)"/>
                     </svg>

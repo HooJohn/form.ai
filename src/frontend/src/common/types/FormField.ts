@@ -66,6 +66,8 @@ export interface FormField {
   maxValue?: number | string; // For number or date fields
   allowedFileTypes?: string[]; // For FILE_UPLOAD, e.g., ["pdf", "jpg", "png"]
   maxFileSizeMB?: number; // For FILE_UPLOAD
+  imageWidth?: number; // For FILE_UPLOAD, target width in pixels
+  imageHeight?: number; // For FILE_UPLOAD, target height in pixels
 
   // AI-related properties
   confidence?: number; // AI's confidence in the auto-filled value (0-100)

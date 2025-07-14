@@ -38,6 +38,7 @@ import aiRoutes from './routes/ai.routes';
 import feedbackRoutes from './routes/feedback.routes';
 import reportRoutes from './routes/report.routes';
 import userRoutes from './routes/user.routes';
+import fileRoutes from './routes/file.routes';
 app.use('/api/auth', authRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api/forms', formRoutes);
@@ -45,6 +46,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/files', fileRoutes);
 
 // Catch-all for 404 Not Found errors
 app.use((req: Request, res: Response, next: NextFunction) => {

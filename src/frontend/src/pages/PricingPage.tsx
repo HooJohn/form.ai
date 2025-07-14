@@ -23,6 +23,8 @@ const pricingTiers = [
       { 'zh-HK': '無限次填寫', 'zh-CN': '无限次填写', 'en': 'Unlimited Form Fills' },
       { 'zh-HK': '高級模板庫', 'zh-CN': '高级模板库', 'en': 'Advanced Template Library' },
       { 'zh-HK': 'AI 升學報告', 'zh-CN': 'AI 升学报告', 'en': 'AI Admissions Reports' },
+      { 'zh-HK': '手寫電子簽名', 'zh-CN': '手写电子签名', 'en': 'Handwritten E-Signatures' },
+      { 'zh-HK': '智能圖片尺寸調整', 'zh-CN': '智能图片尺寸调整', 'en': 'Smart Photo Resizing' },
       { 'zh-HK': '高清 PDF 導出', 'zh-CN': '高清 PDF 导出', 'en': 'High-Res PDF Export' },
     ],
     cta: { 'zh-HK': '選擇專業版', 'zh-CN': '选择专业版', 'en': 'Choose Pro' },

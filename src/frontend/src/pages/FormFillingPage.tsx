@@ -4,7 +4,9 @@ import { getForm, updateForm } from '../services/form.service';
 import * as feedbackService from '../services/feedback.service';
 import * as reportService from '../services/report.service';
 import * as aiService from '../services/ai.service'; // <--- ADDED MISSING IMPORT
-import { FilledForm, FormSection, FormField, ExtractedInfoItem, LocalizedString } from './../common/types';
+import { FilledForm, FormSection, FormField, ExtractedInfoItem, LocalizedString, FormFieldType } from './../common/types';
+import ImageUploadField from '../components/feature/ImageUploadField';
+import SignatureField from '../components/feature/SignatureField';
 import { debounce } from 'lodash';
 import SmartAssistant from '../components/feature/Form/SmartAssistant';
 import Modal from '../components/shared/Modal';
@@ -231,17 +233,7 @@ const FormFillingPage = () => {
                   <div key={section.id} className="mb-8 p-8 bg-white rounded-2xl shadow-inner border border-secondary/10">
                     <h4 className="text-2xl font-semibold text-text-primary mb-6 border-b border-secondary/10 pb-4">{t(section.title)}</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
-                      {section.fields.map(field => (
-                        <div key={field.id}>
-                          <label className="block text-sm font-medium text-text-secondary mb-2">{t(field.label)}</label>
-                          <input
-                            type="text"
-                            className="w-full p-3 border border-secondary/30 rounded-lg focus:ring-primary focus:border-primary"
-                            value={String(field.value ?? '')}
-                            onChange={(e) => handleFieldChange(section.id, field.id, e.target.value)}
-                          />
-                        </div>
-                      ))}
+                      {section.fields.map(field => renderField(section.id, field))}
                     </div>
                   </div>
                 )
@@ -261,6 +253,51 @@ const FormFillingPage = () => {
       </div>
     </>
   );
+
+  function renderField(sectionId: string, field: FormField) {
+    const commonProps = {
+      key: field.id,
+      id: field.id,
+      className: "w-full p-3 border border-secondary/30 rounded-lg focus:ring-primary focus:border-primary",
+      value: String(field.value ?? ''),
+      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => handleFieldChange(sectionId, field.id, e.target.value),
+    };
+
+    const fieldWrapper = (children: React.ReactNode) => (
+      <div key={field.id} className="md:col-span-2">
+        <label htmlFor={field.id} className="block text-sm font-medium text-text-secondary mb-2">{t(field.label)}</label>
+        {children}
+      </div>
+    );
+
+    switch (field.type) {
+      case FormFieldType.FILE_UPLOAD:
+        return fieldWrapper(
+          <ImageUploadField 
+            fieldId={field.id} 
+            onUploadSuccess={(filePath) => handleFieldChange(sectionId, field.id, filePath)} 
+            targetWidth={field.imageWidth}
+            targetHeight={field.imageHeight}
+            t={t}
+          />
+        );
+
+      case FormFieldType.SIGNATURE:
+        return fieldWrapper(
+          <SignatureField 
+            fieldId={field.id} 
+            onUploadSuccess={(filePath) => handleFieldChange(sectionId, field.id, filePath)} 
+            t={t}
+          />
+        );
+
+      case FormFieldType.TEXTAREA:
+        return fieldWrapper(<textarea {...commonProps} rows={4} />);
+
+      default:
+        return fieldWrapper(<input {...commonProps} type={field.type} />);
+    }
+  }
 };
 
 export default FormFillingPage;
