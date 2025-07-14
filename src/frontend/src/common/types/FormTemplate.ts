@@ -44,7 +44,7 @@ export interface FormTemplate {
   // Average time to complete (estimated or based on user data)
   estimatedCompletionTimeMinutes?: number;
 
-  // Is this template curated/verified by SmartForm AI team?
+  // Is this template curated/verified by Form.AI team?
   isVerified?: boolean;
 
   // Who contributed this template, if applicable (e.g., user ID, 'SmartForm Team')

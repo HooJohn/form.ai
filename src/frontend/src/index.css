@@ -46,8 +46,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: theme('colors.background');
-  color: theme('colors.text');
+  background-color: theme('colors.accent.DEFAULT');
+  color: theme('colors.text-primary');
 }
 
 code {

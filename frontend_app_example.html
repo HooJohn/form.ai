@@ -111,7 +111,7 @@ const Header = ({ currentView, setView, language, setLanguage }) => {
     <header className="bg-white shadow-sm py-4 px-6 flex justify-between items-center rounded-b-lg">
       <div className="flex items-center space-x-4">
         <h1 className="text-xl font-bold text-primary flex items-center">
-          <span className="text-2xl mr-2">🎓</span> SmartForm AI 2.0
+          <span className="text-2xl mr-2">🎓</span> Form.AI 2.0
         </h1>
         <nav className="hidden md:flex space-x-6">
           <button onClick={() => setView('templateLibrary')} className={`text-text hover:text-primary font-medium ${currentView === 'templateLibrary' ? 'text-primary' : ''}`}>
@@ -155,7 +155,7 @@ const Dashboard = ({ setView, language }) => {
     <div className="p-8 bg-gray-50 min-h-screen font-sans">
       <div className="max-w-7xl mx-auto">
         <h2 className="text-3xl font-semibold text-primary mb-8">
-          {language === 'zh-HK' ? '歡迎使用 SmartForm AI 2.0' : language === 'zh-CN' ? '欢迎使用 SmartForm AI 2.0' : 'Welcome to SmartForm AI 2.0'}
+          {language === 'zh-HK' ? '歡迎使用 Form.AI 2.0' : language === 'zh-CN' ? '欢迎使用 Form.AI 2.0' : 'Welcome to Form.AI 2.0'}
         </h2>
 
         {/* Quick Start */}
@@ -763,7 +763,7 @@ const Footer = ({ language }) => {
     <footer className="bg-primary text-white py-6 px-6 text-center text-sm rounded-t-lg shadow-inner">
       <div className="max-w-7xl mx-auto">
         <p className="mb-2">
-          &copy; {new Date().getFullYear()} SmartForm AI 2.0. {language === 'zh-HK' ? '版權所有。' : language === 'zh-CN' ? '版权所有。' : 'All rights reserved.'}
+          &copy; {new Date().getFullYear()} Form.AI 2.0. {language === 'zh-HK' ? '版權所有。' : language === 'zh-CN' ? '版权所有。' : 'All rights reserved.'}
         </p>
         <p className="mb-2">
           {language === 'zh-HK' ? '由 [您的公司名稱] 開發。' : language === 'zh-CN' ? '由 [您的公司名称] 开发。' : 'Developed by [Your Company Name].'}

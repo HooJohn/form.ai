@@ -1,7 +1,7 @@
 {
   "name": "smartform-ai",
   "version": "1.0.0",
-  "description": "SmartForm AI 2.0: Hong Kong School Admission Form Filling Platform",
+  "description": "Form.AI 2.0: Hong Kong School Admission Form Filling Platform",
   "main": "index.js",
   "scripts": {
     "lint": "eslint . --ext .ts,.tsx",

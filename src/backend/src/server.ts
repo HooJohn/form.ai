@@ -23,7 +23,7 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies (Co
 
 // Basic Routes
 app.get('/', (req: Request, res: Response) => {
-  res.send('SmartForm AI Backend is running!');
+  res.send('Form.AI Backend is running!');
 });
 
 app.get('/api/health', (req: Request, res: Response) => {

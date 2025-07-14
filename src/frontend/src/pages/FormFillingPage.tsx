@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getForm, updateForm } from '../services/form.service';
 import * as feedbackService from '../services/feedback.service';
 import * as reportService from '../services/report.service';
+import * as aiService from '../services/ai.service'; // <--- ADDED MISSING IMPORT
 import { FilledForm, FormSection, FormField, ExtractedInfoItem, LocalizedString } from './../common/types';
 import { debounce } from 'lodash';
 import SmartAssistant from '../components/feature/Form/SmartAssistant';
@@ -13,13 +14,20 @@ import { useLanguage } from '../contexts/LanguageContext';
 
 const FormFillingPage = () => {
   const { formId } = useParams<{ formId: string }>();
+  const navigate = useNavigate();
   const { language, t } = useLanguage();
   const [form, setForm] = useState<FilledForm | null>(null);
+  const formRef = useRef(form);
+  
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [aiFilledFields, setAiFilledFields] = useState<Set<string>>(new Set());
+
+  // State lifted up from SmartAssistant
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   // State for AI Report
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -27,6 +35,12 @@ const FormFillingPage = () => {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
 
+  // Update ref whenever form state changes
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
+
+  // Fetch form on initial load
   useEffect(() => {
     if (!formId) return;
     const fetchForm = async () => {
@@ -46,6 +60,25 @@ const FormFillingPage = () => {
     fetchForm();
   }, [formId]);
 
+  // Auto-save when the user leaves the page
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        if (formRef.current && formId) {
+          const url = `/api/forms/${formId}`;
+          const data = JSON.stringify({ sections: formRef.current.sections });
+          // Use a Blob with the correct content type for robust saving
+          const blob = new Blob([data], { type: 'application/json' });
+          navigator.sendBeacon(url, blob);
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [formId]);
+
   const debouncedSave = useCallback(
     debounce(async (updatedForm: FilledForm) => {
       if (!formId) return;
@@ -62,35 +95,11 @@ const FormFillingPage = () => {
 
   const handleFieldChange = (sectionId: string, fieldId: string, newValue: FormField['value']) => {
     if (!form) return;
-
-    const fieldIdentifier = `${sectionId}-${fieldId}`;
-    if (aiFilledFields.has(fieldIdentifier)) {
-      const originalValue = form.sections.find(s => s.id === sectionId)?.fields.find(f => f.id === fieldId)?.value ?? '';
-      feedbackService.submitCorrection({
-        formId: form.id,
-        sectionId,
-        fieldId,
-        originalAiValue: String(originalValue),
-        userCorrectedValue: String(newValue),
-      });
-      const newAiFilledFields = new Set(aiFilledFields);
-      newAiFilledFields.delete(fieldIdentifier);
-      setAiFilledFields(newAiFilledFields);
-    }
-
-    const newSections = form.sections.map(section => {
-      if (section.id === sectionId) {
-        const newFields = section.fields.map(field => {
-          if (field.id === fieldId) {
-            return { ...field, value: newValue };
-          }
-          return field;
-        });
-        return { ...section, fields: newFields };
-      }
-      return section;
-    });
-
+    const newSections = form.sections.map(section =>
+      section.id === sectionId
+        ? { ...section, fields: section.fields.map(field => (field.id === fieldId ? { ...field, value: newValue } : field)) }
+        : section
+    );
     const updatedForm = { ...form, sections: newSections };
     setForm(updatedForm);
     setSaveStatus('idle');
@@ -99,24 +108,34 @@ const FormFillingPage = () => {
 
   const handleAutoFill = (extractedInfo: ExtractedInfoItem[]) => {
     if (!form) return;
-    const newAiFilledFields = new Set<string>();
     let tempForm = { ...form };
-
     extractedInfo.forEach(info => {
       for (const section of tempForm.sections) {
         for (const field of section.fields) {
           if (t(field.label).toLowerCase().includes(info.label.toLowerCase())) {
             field.value = info.value;
-            newAiFilledFields.add(`${section.id}-${field.id}`);
           }
         }
       }
     });
-    
-    setAiFilledFields(newAiFilledFields);
     setForm(tempForm);
     setSaveStatus('idle');
     debouncedSave(tempForm);
+  };
+
+  // This function is now part of the parent component
+  const handleAnalyzeForm = async (file: File) => {
+    if (!file || !formId) return;
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    try {
+      const sections = await aiService.analyzeForm(file);
+      handleFormAnalyzed(sections);
+    } catch (err: any) {
+      setAnalysisError(err.message);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleFormAnalyzed = (sections: FormSection[]) => {
@@ -146,23 +165,27 @@ const FormFillingPage = () => {
   };
 
   const getSaveStatusMessage = () => {
-    // Implementation is fine
-    return '...';
+    switch (saveStatus) {
+      case 'saving':
+        return t({ 'zh-HK': '正在儲存...', 'zh-CN': '正在保存...', 'en': 'Saving...' });
+      case 'saved':
+        return t({ 'zh-HK': '已儲存', 'zh-CN': '已保存', 'en': 'Saved' });
+      case 'error':
+        return t({ 'zh-HK': '儲存失敗', 'zh-CN': '保存失败', 'en': 'Save failed' });
+      default:
+        return t({ 'zh-HK': '所有變更將自動儲存', 'zh-CN': '所有变更将自动保存', 'en': 'All changes saved automatically' });
+    }
   };
 
-  if (loading) return <p className="text-center mt-10">Loading Form...</p>;
-  if (error) return <p className="text-center mt-10 text-red-500">Error: {error}</p>;
-  if (!form) return <p className="text-center mt-10">Form not found.</p>;
+  if (loading) return <p className="text-center mt-10">{t({ 'zh-HK': '正在加載表單...', 'zh-CN': '正在加载表单...', 'en': 'Loading Form...' })}</p>;
+  if (error) return <p className="text-center mt-10 text-red-500">{t({ 'zh-HK': '錯誤', 'zh-CN': '错误', 'en': 'Error' })}: {error}</p>;
+  if (!form) return <p className="text-center mt-10">{t({ 'zh-HK': '找不到表單', 'zh-CN': '找不到表单', 'en': 'Form not found.' })}</p>;
 
   return (
     <>
-      {/* <Modal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} title="AI School Report"> */}
-        {/* Modal content is fine */}
-      {/* </Modal> */}
-
-      <Modal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} title="AI School Report">
-        {isGeneratingReport && <p>Generating report, please wait...</p>}
-        {reportError && <p className="text-red-500">Error: {reportError}</p>}
+      <Modal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} title={t({ 'zh-HK': 'AI 升學報告', 'zh-CN': 'AI 升学报告', 'en': 'AI Admissions Report' })}>
+        {isGeneratingReport && <p>{t({ 'zh-HK': '正在生成報告...', 'zh-CN': '正在生成报告...', 'en': 'Generating report...' })}</p>}
+        {reportError && <p className="text-red-500">{t({ 'zh-HK': '錯誤', 'zh-CN': '错误', 'en': 'Error' })}: {reportError}</p>}
         {reportContent && !isGeneratingReport && (
           <div className="prose max-w-none">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -172,47 +195,67 @@ const FormFillingPage = () => {
         )}
       </Modal>
 
-      <div className="flex flex-col h-screen bg-gray-50 font-sans">
-        <header className="bg-white shadow-sm py-3 px-6 flex justify-between items-center border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-blue-600">{t(form.title)}</h2>
-          {/* Header content is fine */}
+      <div className="flex flex-col h-screen bg-accent font-sans">
+        <header className="bg-white shadow-sm py-3 px-6 flex justify-between items-center border-b border-secondary/10">
+          <div className="flex items-center">
+            <button onClick={() => navigate(-1)} className="flex items-center text-text-secondary hover:text-primary mr-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              {t({ 'zh-HK': '返回', 'zh-CN': '返回', 'en': 'Back' })}
+            </button>
+            <h2 className="text-lg font-semibold text-secondary">{t(form.title)}</h2>
+          </div>
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-text-secondary">{getSaveStatusMessage()}</span>
+            <button onClick={handleGenerateReport} disabled={isGeneratingReport} className="bg-accent-green text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-green-600 transition-colors">
+              {isGeneratingReport ? t({ 'zh-HK': '生成中...', 'zh-CN': '生成中...', 'en': 'Generating...' }) : t({ 'zh-HK': '生成AI報告', 'zh-CN': '生成AI报告', 'en': 'Generate AI Report' })}
+            </button>
+          </div>
         </header>
 
         <div className="flex flex-1 overflow-hidden">
-          <nav className="w-1/5 bg-white p-6 border-r border-gray-200 overflow-y-auto">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Form Sections</h3>
+          <nav className="w-1/5 bg-white p-6 border-r border-secondary/10 overflow-y-auto">
+            <h3 className="text-xl font-semibold text-text-primary mb-4">{t({ 'zh-HK': '表格章節', 'zh-CN': '表格章节', 'en': 'Form Sections' })}</h3>
             {form.sections.map(section => (
-              <button key={section.id} onClick={() => setActiveSectionId(section.id)} className={`w-full text-left p-3 rounded-lg text-base font-medium transition duration-200 mb-2 ${activeSectionId === section.id ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-100'}`}>
+              <button key={section.id} onClick={() => setActiveSectionId(section.id)} className={`w-full text-left p-3 rounded-lg text-base font-medium transition duration-200 mb-2 ${activeSectionId === section.id ? 'bg-primary text-white' : 'text-text-secondary hover:bg-accent'}`}>
                 {t(section.title)}
               </button>
             ))}
           </nav>
 
-          <main className="flex-1 p-8 overflow-y-auto bg-white shadow-lg">
+          <main className="flex-1 p-8 overflow-y-auto bg-accent">
             <div className="max-w-3xl mx-auto">
               {form.sections.map(section => (
-                <div key={section.id} className="mb-8 p-6 bg-gray-50 rounded-lg shadow-inner">
-                  <h4 className="text-xl font-semibold text-gray-700 mb-5 border-b pb-3">{t(section.title)}</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-6">
-                    {section.fields.map(field => (
-                      <div key={field.id}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">{t(field.label)}</label>
-                        <input
-                          type="text"
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                          value={String(field.value ?? '')}
-                          onChange={(e) => handleFieldChange(section.id, field.id, e.target.value)}
-                        />
-                      </div>
-                    ))}
+                section.id === activeSectionId && (
+                  <div key={section.id} className="mb-8 p-8 bg-white rounded-2xl shadow-inner border border-secondary/10">
+                    <h4 className="text-2xl font-semibold text-text-primary mb-6 border-b border-secondary/10 pb-4">{t(section.title)}</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+                      {section.fields.map(field => (
+                        <div key={field.id}>
+                          <label className="block text-sm font-medium text-text-secondary mb-2">{t(field.label)}</label>
+                          <input
+                            type="text"
+                            className="w-full p-3 border border-secondary/30 rounded-lg focus:ring-primary focus:border-primary"
+                            value={String(field.value ?? '')}
+                            onChange={(e) => handleFieldChange(section.id, field.id, e.target.value)}
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )
               ))}
             </div>
           </main>
 
-          <aside className="w-1/4 bg-white overflow-y-auto">
-            <SmartAssistant onAutoFill={handleAutoFill} onFormAnalyzed={handleFormAnalyzed} />
+          <aside className="w-1/4 bg-white overflow-y-auto border-l border-secondary/10">
+            <SmartAssistant 
+              onAutoFill={handleAutoFill} 
+              onAnalyzeForm={handleAnalyzeForm}
+              isAnalyzing={isAnalyzing}
+              analysisError={analysisError}
+            />
           </aside>
         </div>
       </div>
@@ -221,4 +264,3 @@ const FormFillingPage = () => {
 };
 
 export default FormFillingPage;
-

@@ -8,11 +8,13 @@ def perform_ocr(image_path):
     """
     try:
         # Initialize PaddleOCR. It will download models on first run.
-        # Use `use_gpu=False` if you don't have a GPU setup.
         # `lang='ch'` enables models for Chinese and English.
-        ocr = PaddleOCR(use_angle_cls=True, lang='ch', use_gpu=False)
+        # The `use_angle_cls` parameter is deprecated, replaced by `use_textline_orientation`.
+        # The `use_gpu` parameter has been removed in newer versions.
+        ocr = PaddleOCR(use_textline_orientation=True, lang='ch')
         
-        result = ocr.ocr(image_path, cls=True)
+        # Use the modern `predict` method.
+        result = ocr.predict(image_path)
         
         # The result is a list of lists, we need to format it.
         # Each item in the outer list is a detected line.

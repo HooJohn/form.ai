@@ -23,4 +23,8 @@ router.get('/:formId', getFormById);
 // @desc    Update a form's data
 router.put('/:formId', updateForm);
 
+// @route   POST api/forms/:formId
+// @desc    Update a form's data (used for sendBeacon)
+router.post('/:formId', updateForm);
+
 export default router;

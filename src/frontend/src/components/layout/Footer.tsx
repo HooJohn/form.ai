@@ -8,7 +8,7 @@ const Footer = () => {
     <footer className="bg-white text-gray-600 py-6 px-6 text-center text-sm mt-auto border-t">
       <div className="max-w-7xl mx-auto">
         <p className="mb-2">
-          &copy; {new Date().getFullYear()} SmartForm AI. {t({ 'zh-HK': '版權所有。', 'zh-CN': '版权所有。', 'en': 'All rights reserved.' })}
+          &copy; {new Date().getFullYear()} Form.AI. {t({ 'zh-HK': '版權所有。', 'zh-CN': '版权所有。', 'en': 'All rights reserved.' })}
         </p>
         <div className="flex justify-center space-x-4 mt-3">
           <a href="#" className="text-gray-600 hover:text-blue-600 transition duration-200">

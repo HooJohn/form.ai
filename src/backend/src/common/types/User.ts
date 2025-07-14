@@ -1,7 +1,7 @@
 import { LanguageCode, SubscriptionPlan, UserRole } from './Shared';
 
 /**
- * Represents a user in the SmartForm AI system.
+ * Represents a user in the Form.AI system.
  * This is a basic structure and can be expanded based on detailed requirements.
  */
 export interface UserProfile {

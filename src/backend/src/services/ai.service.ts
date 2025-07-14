@@ -64,21 +64,45 @@ const generatePromptForFormAnalysis = (ocrData: OcrResult[]): string => {
  * @returns A promise that resolves to the structured OCR result.
  */
 export const performOcr = (filePath: string): Promise<OcrResult[]> => {
-  // ... (The existing performOcr implementation remains the same)
   return new Promise((resolve, reject) => {
     const scriptPath = path.join(__dirname, '..', '..', 'scripts', 'ocr_script.py');
-    const pythonProcess = spawn('python3', [scriptPath, filePath]);
+    const pythonExecutable = path.join(__dirname, '..', '..', '.venv', 'bin', 'python');
+
+    console.log(`[AI Service] Spawning OCR script: ${pythonExecutable} ${scriptPath} ${filePath}`);
+    const pythonProcess = spawn(pythonExecutable, [scriptPath, filePath]);
+
     let stdout = '';
     let stderr = '';
-    pythonProcess.stdout.on('data', (data) => { stdout += data.toString(); });
-    pythonProcess.stderr.on('data', (data) => { stderr += data.toString(); });
+
+    pythonProcess.stdout.on('data', (data) => {
+      const output = data.toString();
+      console.log(`[OCR STDOUT]: ${output}`);
+      stdout += output;
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      const errorOutput = data.toString();
+      console.error(`[OCR STDERR]: ${errorOutput}`);
+      stderr += errorOutput;
+    });
+
     pythonProcess.on('close', (code) => {
-      if (code !== 0) return reject(new Error(`OCR script failed with code ${code}: ${stderr}`));
+      console.log(`[AI Service] OCR script finished with code ${code}`);
+      if (code !== 0) {
+        return reject(new Error(`OCR script failed with code ${code}: ${stderr}`));
+      }
       try {
-        resolve(JSON.parse(stdout));
+        const result = JSON.parse(stdout);
+        resolve(result);
       } catch (e) {
+        console.error('Failed to parse OCR script output:', stdout);
         reject(new Error('Failed to parse OCR script output.'));
       }
+    });
+
+    pythonProcess.on('error', (err) => {
+      console.error('[AI Service] Failed to start OCR script:', err);
+      reject(err);
     });
   });
 };

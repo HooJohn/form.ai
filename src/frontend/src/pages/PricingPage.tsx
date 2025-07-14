@@ -47,15 +47,15 @@ const PricingPage = () => {
   const { t } = useLanguage();
 
   return (
-    <div className="bg-white py-20 sm:py-28">
+    <div className="bg-accent py-20 sm:py-28">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-base font-semibold leading-7 text-blue-600">{t({ 'zh-HK': '定價', 'zh-CN': '定价', 'en': 'Pricing' })}</h2>
-          <p className="mt-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+          <h2 className="text-base font-semibold leading-7 text-primary">{t({ 'zh-HK': '定價', 'zh-CN': '定价', 'en': 'Pricing' })}</h2>
+          <p className="mt-2 text-4xl font-bold tracking-tight text-text-primary sm:text-5xl">
             {t({ 'zh-HK': '選擇適合您的方案', 'zh-CN': '选择适合您的方案', 'en': 'The Right Plan for You' })}
           </p>
         </div>
-        <p className="mx-auto mt-6 max-w-2xl text-center text-lg leading-8 text-gray-600">
+        <p className="mx-auto mt-6 max-w-2xl text-center text-lg leading-8 text-text-secondary">
           {t({ 'zh-HK': '從免費開始，體驗核心功能，並可隨時升級以解鎖更強大的AI能力。', 'zh-CN': '从免费开始，体验核心功能，并可随时升级以解锁更强大的AI能力。', 'en': 'Start for free to experience core features, and upgrade anytime to unlock more powerful AI capabilities.' })}
         </p>
         
@@ -63,28 +63,35 @@ const PricingPage = () => {
           {pricingTiers.map((tier) => (
             <div
               key={t(tier.name)}
-              className={`rounded-3xl p-8 ring-1 xl:p-10 ${tier.isFeatured ? 'bg-gray-900 ring-gray-900' : 'ring-gray-200'}`}
+              className={`relative rounded-3xl p-8 ring-1 xl:p-10 ${tier.isFeatured ? 'bg-gradient-to-b from-secondary to-secondary-dark ring-secondary' : 'bg-white ring-secondary/20'}`}
             >
-              <h3 className={`text-lg font-semibold leading-8 ${tier.isFeatured ? 'text-white' : 'text-gray-900'}`}>{t(tier.name)}</h3>
-              <p className={`mt-4 text-sm leading-6 ${tier.isFeatured ? 'text-gray-300' : 'text-gray-600'}`}>{t(tier.priceDetail)}</p>
+              {tier.isFeatured && (
+                <div className="absolute top-0 -translate-y-1/2 transform">
+                  <span className="inline-flex items-center rounded-full bg-accent-pink px-4 py-1 text-sm font-semibold text-white">
+                    {t({ 'zh-HK': '推薦', 'zh-CN': '推荐', 'en': 'Featured' })}
+                  </span>
+                </div>
+              )}
+              <h3 className={`text-lg font-semibold leading-8 ${tier.isFeatured ? 'text-white' : 'text-text-primary'}`}>{t(tier.name)}</h3>
+              <p className={`mt-4 text-sm leading-6 ${tier.isFeatured ? 'text-white/80' : 'text-text-secondary'}`}>{t(tier.priceDetail)}</p>
               <p className="mt-6 flex items-baseline gap-x-1">
-                <span className={`text-4xl font-bold tracking-tight ${tier.isFeatured ? 'text-white' : 'text-gray-900'}`}>{t(tier.price)}</span>
+                <span className={`text-4xl font-bold tracking-tight ${tier.isFeatured ? 'text-white' : 'text-text-primary'}`}>{t(tier.price)}</span>
               </p>
               <Link
                 to="/auth"
                 aria-describedby={t(tier.name)}
                 className={`mt-6 block rounded-md py-3 px-3 text-center text-base font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
                   tier.isFeatured
-                    ? 'bg-white text-gray-900 hover:bg-gray-200 focus-visible:outline-white'
-                    : 'bg-blue-600 text-white shadow-sm hover:bg-blue-500 focus-visible:outline-blue-600'
+                    ? 'bg-primary text-white hover:bg-primary-dark focus-visible:outline-white'
+                    : 'bg-primary text-white shadow-sm hover:bg-primary-dark focus-visible:outline-primary'
                 }`}
               >
                 {t(tier.cta)}
               </Link>
-              <ul className={`mt-8 space-y-3 text-sm leading-6 xl:mt-10 ${tier.isFeatured ? 'text-gray-300' : 'text-gray-600'}`}>
+              <ul className={`mt-8 space-y-3 text-sm leading-6 xl:mt-10 ${tier.isFeatured ? 'text-white/80' : 'text-text-secondary'}`}>
                 {tier.features.map((feature) => (
                   <li key={t(feature)} className="flex gap-x-3">
-                    <svg className={`h-6 w-5 flex-none ${tier.isFeatured ? 'text-white' : 'text-blue-600'}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <svg className={`h-6 w-5 flex-none ${tier.isFeatured ? 'text-accent-green' : 'text-primary'}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                       <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.052-.143z" clipRule="evenodd" />
                     </svg>
                     {t(feature)}

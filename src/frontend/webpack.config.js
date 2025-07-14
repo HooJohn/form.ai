@@ -57,12 +57,19 @@ module.exports = (env, argv) => {
     devtool: isProduction ? 'source-map' : 'cheap-module-source-map',
     devServer: {
       static: {
-        directory: path.join(__dirname, 'public'), // Serve files from public
+        directory: path.join(__dirname, 'public'),
       },
       compress: true,
       port: 3000,
       historyApiFallback: true,
       hot: true,
+      proxy: [
+        {
+          context: ['/api'],
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+        }
+      ],
     },
     optimization: {
       splitChunks: {

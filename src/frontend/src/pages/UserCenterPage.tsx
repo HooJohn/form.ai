@@ -47,46 +47,52 @@ const UserCenterPage = () => {
   if (!profile) return <div className="p-8"><p>Could not load profile.</p></div>;
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">{t({ 'zh-HK': '用戶中心', 'zh-CN': '用户中心', 'en': 'User Center' })}</h1>
-      
-      {/* Profile Information */}
-      <div className="bg-white p-8 rounded-lg shadow-md mb-8">
-        <h2 className="text-2xl font-semibold mb-6">個人資料</h2>
-        <form onSubmit={handleProfileUpdate}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">電郵地址</label>
-              <p className="mt-1 p-2 bg-gray-100 rounded-md">{profile.email}</p>
+    <div className="p-8 bg-accent min-h-full">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8 text-text-primary">{t({ 'zh-HK': '用戶中心', 'zh-CN': '用户中心', 'en': 'User Center' })}</h1>
+        
+        {/* Profile Information */}
+        <div className="bg-white p-8 rounded-2xl shadow-lg mb-8 border border-secondary/10">
+          <h2 className="text-2xl font-semibold mb-6 text-text-primary">{t({ 'zh-HK': '個人資料', 'zh-CN': '个人资料', 'en': 'Profile Information' })}</h2>
+          <form onSubmit={handleProfileUpdate}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-text-secondary">{t({ 'zh-HK': '電郵地址', 'zh-CN': '电邮地址', 'en': 'Email Address' })}</label>
+                <p className="mt-1 p-3 bg-accent rounded-lg text-text-secondary">{profile.email}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-text-secondary">{t({ 'zh-HK': '用戶角色', 'zh-CN': '用户角色', 'en': 'User Role' })}</label>
+                <p className="mt-1 p-3 bg-accent rounded-lg text-text-secondary">{profile.role}</p>
+              </div>
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium text-text-secondary">{t({ 'zh-HK': '名字', 'zh-CN': '名字', 'en': 'First Name' })}</label>
+                <input type="text" id="firstName" value={firstName} onChange={e => setFirstName(e.target.value)} className="mt-1 w-full p-3 border border-secondary/30 rounded-lg focus:ring-primary focus:border-primary" />
+              </div>
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-medium text-text-secondary">{t({ 'zh-HK': '姓氏', 'zh-CN': '姓氏', 'en': 'Last Name' })}</label>
+                <input type="text" id="lastName" value={lastName} onChange={e => setLastName(e.target.value)} className="mt-1 w-full p-3 border border-secondary/30 rounded-lg focus:ring-primary focus:border-primary" />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">用戶角色</label>
-              <p className="mt-1 p-2 bg-gray-100 rounded-md">{profile.role}</p>
+            <div className="text-right mt-6">
+              <button type="submit" className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-300">
+                {t({ 'zh-HK': '保存更改', 'zh-CN': '保存更改', 'en': 'Save Changes' })}
+              </button>
             </div>
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">名字</label>
-              <input type="text" id="firstName" value={firstName} onChange={e => setFirstName(e.target.value)} className="mt-1 w-full p-2 border rounded-md" />
-            </div>
-            <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">姓氏</label>
-              <input type="text" id="lastName" value={lastName} onChange={e => setLastName(e.target.value)} className="mt-1 w-full p-2 border rounded-md" />
-            </div>
-          </div>
-          <div className="text-right mt-6">
-            <button type="submit" className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">保存更改</button>
-          </div>
-        </form>
-      </div>
+          </form>
+        </div>
 
-      {/* Subscription Plan */}
-      <div className="bg-white p-8 rounded-lg shadow-md">
-        <h2 className="text-2xl font-semibold mb-6">我的訂閱</h2>
-        <div className="bg-blue-50 p-6 rounded-lg flex justify-between items-center">
-          <div>
-            <p className="text-lg">您目前的方案是：<span className="font-bold text-blue-600">{profile.subscriptionPlan}</span></p>
-            <p className="text-gray-500 text-sm mt-1">感謝您的支持！</p>
+        {/* Subscription Plan */}
+        <div className="bg-white p-8 rounded-2xl shadow-lg border border-secondary/10">
+          <h2 className="text-2xl font-semibold mb-6 text-text-primary">{t({ 'zh-HK': '我的訂閱', 'zh-CN': '我的订阅', 'en': 'My Subscription' })}</h2>
+          <div className="bg-accent p-6 rounded-lg flex justify-between items-center">
+            <div>
+              <p className="text-lg text-text-secondary">{t({ 'zh-HK': '您目前的方案是：', 'zh-CN': '您目前的方案是：', 'en': 'Your current plan is:' })}<span className="font-bold text-accent-pink ml-2">{profile.subscriptionPlan}</span></p>
+              <p className="text-text-secondary text-sm mt-1">{t({ 'zh-HK': '感謝您的支持！', 'zh-CN': '感谢您的支持！', 'en': 'Thank you for your support!' })}</p>
+            </div>
+            <button className="bg-accent-green text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors duration-300">
+              {t({ 'zh-HK': '升級方案', 'zh-CN': '升级方案', 'en': 'Upgrade Plan' })}
+            </button>
           </div>
-          <button className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600">升級方案</button>
         </div>
       </div>
     </div>
