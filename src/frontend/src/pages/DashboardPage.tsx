@@ -1,15 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
-import { FilledForm, FormTemplate } from '../common/types';
+import { FilledForm, FormTemplate, SubscriptionPlan, UserProfile } from '../common/types';
 import { getMyForms } from '../services/form.service';
 import { getTemplates } from '../services/template.service';
+import * as authService from '../services/auth.service';
+import * as aiService from '../services/ai.service';
+
+type SessionUser = UserProfile & { subscriptionPlan: SubscriptionPlan };
 
 const DashboardPage = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [recentForms, setRecentForms] = useState<FilledForm[]>([]);
   const [recommendedTemplates, setRecommendedTemplates] = useState<FormTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [user] = useState<SessionUser | null>(() => {
+    const authData = authService.getAuthData();
+    return authData ? (authData.user as SessionUser) : null;
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -19,8 +30,8 @@ const DashboardPage = () => {
           getMyForms(),
           getTemplates()
         ]);
-        setRecentForms(forms.slice(0, 3)); // Show latest 3 forms
-        setRecommendedTemplates(templates.slice(0, 3)); // Show first 3 templates as recommendations
+        setRecentForms(forms.slice(0, 3));
+        setRecommendedTemplates(templates.slice(0, 3));
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       } finally {
@@ -29,6 +40,37 @@ const DashboardPage = () => {
     };
     fetchData();
   }, []);
+
+  const handleUploadClick = () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    if (user.subscriptionPlan === SubscriptionPlan.FREE) {
+      alert(t({
+        'zh-HK': '上傳自定義模板是專業版和家庭版功能。請升級您的帳戶。',
+        'zh-CN': '上传自定义模板是专业版和家庭版功能。请升级您的帐户。',
+        'en': 'Uploading custom templates is a Professional and Family feature. Please upgrade your account.'
+      }));
+      navigate('/pricing');
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsAnalyzing(true);
+    try {
+      const newForm = await aiService.analyzeAndCreateForm(file);
+      navigate(`/forms/${newForm.id}`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Upload failed');
+      setIsAnalyzing(false);
+    }
+  };
 
   return (
     <div className="p-8 bg-accent min-h-full">
@@ -42,13 +84,24 @@ const DashboardPage = () => {
           <h3 className="text-2xl font-semibold text-text-primary mb-6">
             {t({ 'zh-HK': '快速開始', 'zh-CN': '快速开始', 'en': 'Quick Start' })}
           </h3>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+            accept="image/png, image/jpeg, application/pdf"
+            disabled={isAnalyzing}
+          />
           <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6">
-            <Link
-              to="/templates"
-              className="flex-1 text-center bg-primary text-white py-4 px-6 rounded-xl text-lg font-bold shadow-md hover:bg-primary-dark transition duration-300 transform hover:scale-105"
+            <button
+              onClick={handleUploadClick}
+              disabled={isAnalyzing}
+              className="flex-1 text-center bg-primary text-white py-4 px-6 rounded-xl text-lg font-bold shadow-md hover:bg-primary-dark transition duration-300 transform hover:scale-105 disabled:bg-gray-400"
             >
-              {t({ 'zh-HK': '上載表格開始填寫', 'zh-CN': '上传表格开始填写', 'en': 'Upload Form to Start' })}
-            </Link>
+              {isAnalyzing 
+                ? t({ 'zh-HK': '分析中...', 'zh-CN': '分析中...', 'en': 'Analyzing...' })
+                : t({ 'zh-HK': '上載表格開始填寫', 'zh-CN': '上传表格开始填写', 'en': 'Upload Form to Start' })}
+            </button>
             <Link
               to="/templates"
               className="flex-1 text-center bg-secondary text-white py-4 px-6 rounded-xl text-lg font-bold shadow-md hover:bg-secondary-dark transition duration-300 transform hover:scale-105"
@@ -118,3 +171,4 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+

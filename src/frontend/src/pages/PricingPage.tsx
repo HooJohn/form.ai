@@ -1,27 +1,39 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Link } from 'react-router-dom';
+import * as userService from '../services/user.service';
+import { UserProfile, SubscriptionPlan } from '../common/types';
+
+const planOrder = {
+  [SubscriptionPlan.FREE]: 0,
+  [SubscriptionPlan.PROFESSIONAL]: 1,
+  [SubscriptionPlan.FAMILY]: 2,
+  [SubscriptionPlan.ENTERPRISE]: 3,
+  [SubscriptionPlan.BASIC]: 0, // Assuming basic is similar to free for this logic
+};
 
 const pricingTiers = [
   {
+    id: SubscriptionPlan.FREE,
     name: { 'zh-HK': '免費版', 'zh-CN': '免费版', 'en': 'Free' },
     price: { 'zh-HK': 'HKD 0', 'zh-CN': 'HKD 0', 'en': 'HKD 0' },
     priceDetail: { 'zh-HK': '永久免費', 'zh-CN': '永久免费', 'en': 'Free Forever' },
     features: [
       { 'zh-HK': '每月 2 次填寫', 'zh-CN': '每月 2 次填写', 'en': '2 Form Fills per Month' },
-      { 'zh-HK': '基礎模板庫', 'zh-CN': '基础模板库', 'en': 'Basic Template Library' },
-      { 'zh-HK': '預覽和導出 (受限)', 'zh-CN': '预览和导出 (受限)', 'en': 'Preview & Limited Export' },
+      { 'zh-HK': '平台模板庫', 'zh-CN': '平台模板库', 'en': 'Platform Template Library' },
+      { 'zh-HK': '預覽和導出 (帶水印)', 'zh-CN': '预览和导出 (带水印)', 'en': 'Preview & Export (with watermark)' },
     ],
     cta: { 'zh-HK': '開始使用', 'zh-CN': '开始使用', 'en': 'Get Started' },
     isFeatured: false,
   },
   {
+    id: SubscriptionPlan.PROFESSIONAL,
     name: { 'zh-HK': '專業版', 'zh-CN': '专业版', 'en': 'Professional' },
     price: { 'zh-HK': 'HKD 298', 'zh-CN': 'HKD 298', 'en': 'HKD 298' },
     priceDetail: { 'zh-HK': '每月', 'zh-CN': '每月', 'en': 'per month' },
     features: [
       { 'zh-HK': '無限次填寫', 'zh-CN': '无限次填写', 'en': 'Unlimited Form Fills' },
-      { 'zh-HK': '高級模板庫', 'zh-CN': '高级模板库', 'en': 'Advanced Template Library' },
+      { 'zh-HK': '上傳自定義模板', 'zh-CN': '上传自定义模板', 'en': 'Upload Custom Templates' },
       { 'zh-HK': 'AI 升學報告', 'zh-CN': 'AI 升学报告', 'en': 'AI Admissions Reports' },
       { 'zh-HK': '手寫電子簽名', 'zh-CN': '手写电子签名', 'en': 'Handwritten E-Signatures' },
       { 'zh-HK': '智能圖片尺寸調整', 'zh-CN': '智能图片尺寸调整', 'en': 'Smart Photo Resizing' },
@@ -31,6 +43,7 @@ const pricingTiers = [
     isFeatured: true,
   },
   {
+    id: SubscriptionPlan.FAMILY,
     name: { 'zh-HK': '家庭版', 'zh-CN': '家庭版', 'en': 'Family' },
     price: { 'zh-HK': 'HKD 498', 'zh-CN': 'HKD 498', 'en': 'HKD 498' },
     priceDetail: { 'zh-HK': '每月', 'zh-CN': '每月', 'en': 'per month' },
@@ -38,7 +51,7 @@ const pricingTiers = [
       { 'zh-HK': '專業版所有功能', 'zh-CN': '专业版所有功能', 'en': 'All Professional Features' },
       { 'zh-HK': '最多 3 位成員共享', 'zh-CN': '最多 3 位成员共享', 'en': 'Up to 3 Members' },
       { 'zh-HK': '每月 1 次人工審核', 'zh-CN': '每月 1 次人工审核', 'en': '1 Human Review per Month' },
-      { 'zh-HK': '升學顧問諮詢', 'zh-CN': '升学���问咨询', 'en': 'Admission Advisor Chat' },
+      { 'zh-HK': '升學顧問諮詢', 'zh-CN': '升学顾问咨询', 'en': 'Admission Advisor Chat' },
     ],
     cta: { 'zh-HK': '選擇家庭版', 'zh-CN': '选择家庭版', 'en': 'Choose Family' },
     isFeatured: false,
@@ -47,6 +60,57 @@ const pricingTiers = [
 
 const PricingPage = () => {
   const { t } = useLanguage();
+  const [user, setUser] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const profile = await userService.getProfile();
+        setUser(profile);
+      } catch (error) {
+        // Not logged in, which is fine. User will be null.
+        console.log("User not logged in.");
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const renderCtaButton = (tier: typeof pricingTiers[0]) => {
+    const userPlanLevel = user ? planOrder[user.subscriptionPlan] : -1;
+    const tierPlanLevel = planOrder[tier.id];
+
+    let buttonText: Record<string, string> = tier.cta;
+    let isDisabled = false;
+    let isCurrent = false;
+
+    if (user) {
+      if (userPlanLevel > tierPlanLevel) {
+        isDisabled = true; // Can't downgrade
+      } else if (userPlanLevel === tierPlanLevel) {
+        isDisabled = true;
+        isCurrent = true;
+        buttonText = { 'zh-HK': '當前方案', 'zh-CN': '当前方案', 'en': 'Current Plan' };
+      } else {
+        buttonText = { 'zh-HK': '升級', 'zh-CN': '升级', 'en': 'Upgrade' };
+      }
+    }
+
+    const commonClasses = "mt-6 block rounded-md py-3 px-3 text-center text-base font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2";
+    const featuredClasses = isCurrent ? "bg-gray-400" : "bg-primary text-white hover:bg-primary-dark focus-visible:outline-white";
+    const normalClasses = isCurrent ? "bg-gray-400 text-white" : "bg-primary text-white shadow-sm hover:bg-primary-dark focus-visible:outline-primary";
+    const disabledClasses = "disabled:bg-gray-400 disabled:cursor-not-allowed";
+
+    return (
+      <Link
+        to={isDisabled ? "#" : "/auth"} // In a real app, this would go to a checkout page
+        aria-describedby={t(tier.name)}
+        onClick={(e) => isDisabled && e.preventDefault()}
+        className={`${commonClasses} ${tier.isFeatured ? featuredClasses : normalClasses} ${isDisabled ? disabledClasses : ''}`}
+      >
+        {t(buttonText)}
+      </Link>
+    );
+  };
 
   return (
     <div className="bg-accent py-20 sm:py-28">
@@ -79,17 +143,7 @@ const PricingPage = () => {
               <p className="mt-6 flex items-baseline gap-x-1">
                 <span className={`text-4xl font-bold tracking-tight ${tier.isFeatured ? 'text-white' : 'text-text-primary'}`}>{t(tier.price)}</span>
               </p>
-              <Link
-                to="/auth"
-                aria-describedby={t(tier.name)}
-                className={`mt-6 block rounded-md py-3 px-3 text-center text-base font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
-                  tier.isFeatured
-                    ? 'bg-primary text-white hover:bg-primary-dark focus-visible:outline-white'
-                    : 'bg-primary text-white shadow-sm hover:bg-primary-dark focus-visible:outline-primary'
-                }`}
-              >
-                {t(tier.cta)}
-              </Link>
+              {renderCtaButton(tier)}
               <ul className={`mt-8 space-y-3 text-sm leading-6 xl:mt-10 ${tier.isFeatured ? 'text-white/80' : 'text-text-secondary'}`}>
                 {tier.features.map((feature) => (
                   <li key={t(feature)} className="flex gap-x-3">

@@ -3,8 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getForm, updateForm } from '../services/form.service';
 import * as feedbackService from '../services/feedback.service';
 import * as reportService from '../services/report.service';
-import * as aiService from '../services/ai.service'; // <--- ADDED MISSING IMPORT
-import { FilledForm, FormSection, FormField, ExtractedInfoItem, LocalizedString, FormFieldType } from './../common/types';
+import * as aiService from '../services/ai.service';
+import * as userService from '../services/user.service';
+import { FilledForm, FormSection, FormField, ExtractedInfoItem, LocalizedString, FormFieldType, UserProfile, SubscriptionPlan } from './../common/types';
 import ImageUploadField from '../components/feature/ImageUploadField';
 import SignatureField from '../components/feature/SignatureField';
 import { debounce } from 'lodash';
@@ -20,14 +21,14 @@ const FormFillingPage = () => {
   const { language, t } = useLanguage();
   const [form, setForm] = useState<FilledForm | null>(null);
   const formRef = useRef(form);
+  const [user, setUser] = useState<UserProfile | null>(null);
   
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
-  const [aiFilledFields, setAiFilledFields] = useState<Set<string>>(new Set());
 
-  // State lifted up from SmartAssistant
+  // State for SmartAssistant
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
@@ -37,21 +38,22 @@ const FormFillingPage = () => {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
 
-  // Update ref whenever form state changes
+  // Fetch user and form data on initial load
   useEffect(() => {
-    formRef.current = form;
-  }, [form]);
-
-  // Fetch form on initial load
-  useEffect(() => {
-    if (!formId) return;
-    const fetchForm = async () => {
+    const fetchData = async () => {
+      if (!formId) return;
       try {
         setLoading(true);
-        const data = await getForm(formId);
-        setForm(data);
-        if (data.sections && data.sections.length > 0) {
-          setActiveSectionId(data.sections[0].id);
+        const [formResponse, userProfile] = await Promise.all([
+          getForm(formId),
+          userService.getProfile().catch(() => null) // Allow non-logged in for now
+        ]);
+        
+        setForm(formResponse);
+        setUser(userProfile);
+
+        if (formResponse.sections && formResponse.sections.length > 0) {
+          setActiveSectionId(formResponse.sections[0].id);
         }
       } catch (err: any) {
         setError(err.message);
@@ -59,8 +61,13 @@ const FormFillingPage = () => {
         setLoading(false);
       }
     };
-    fetchForm();
+    fetchData();
   }, [formId]);
+
+  // Update ref whenever form state changes
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
 
   // Auto-save when the user leaves the page
   useEffect(() => {
@@ -69,7 +76,6 @@ const FormFillingPage = () => {
         if (formRef.current && formId) {
           const url = `/api/forms/${formId}`;
           const data = JSON.stringify({ sections: formRef.current.sections });
-          // Use a Blob with the correct content type for robust saving
           const blob = new Blob([data], { type: 'application/json' });
           navigator.sendBeacon(url, blob);
         }
@@ -125,14 +131,20 @@ const FormFillingPage = () => {
     debouncedSave(tempForm);
   };
 
-  // This function is now part of the parent component
   const handleAnalyzeForm = async (file: File) => {
+    // This function is not used in 'fill' mode, but kept for completeness
     if (!file || !formId) return;
     setIsAnalyzing(true);
     setAnalysisError(null);
     try {
       const sections = await aiService.analyzeForm(file);
-      handleFormAnalyzed(sections);
+      if (!form) return;
+      const updatedForm = { ...form, sections };
+      setForm(updatedForm);
+      setSaveStatus('saving');
+      debouncedSave.cancel();
+      await updateForm(form.id, { sections: updatedForm.sections });
+      setSaveStatus('saved');
     } catch (err: any) {
       setAnalysisError(err.message);
     } finally {
@@ -140,19 +152,19 @@ const FormFillingPage = () => {
     }
   };
 
-  const handleFormAnalyzed = (sections: FormSection[]) => {
-    if (!form) return;
-    const updatedForm = { ...form, sections };
-    setForm(updatedForm);
-    setSaveStatus('saving');
-    debouncedSave.cancel();
-    updateForm(form.id, { sections: updatedForm.sections })
-      .then(() => setSaveStatus('saved'))
-      .catch(() => setSaveStatus('error'));
-  };
-
   const handleGenerateReport = async () => {
     if (!formId) return;
+
+    if (user?.subscriptionPlan !== SubscriptionPlan.FAMILY) {
+      alert(t({
+        'zh-HK': '生成AI報告是家庭版專屬功能。請升級您的帳戶。',
+        'zh-CN': '生成AI报告是家庭版专属功能。请升级您的帐户。',
+        'en': 'Generating AI reports is a Family Plan feature. Please upgrade your account.'
+      }));
+      navigate('/pricing');
+      return;
+    }
+
     setIsGeneratingReport(true);
     setReportError(null);
     try {
@@ -243,6 +255,7 @@ const FormFillingPage = () => {
 
           <aside className="w-1/4 bg-white overflow-y-auto border-l border-secondary/10">
             <SmartAssistant 
+              mode="fill"
               onAutoFill={handleAutoFill} 
               onAnalyzeForm={handleAnalyzeForm}
               isAnalyzing={isAnalyzing}

@@ -22,7 +22,7 @@ const Header = () => {
   const handleLogout = () => {
     authService.clearAuthData();
     setAuth(null);
-    navigate('/auth');
+    navigate('/');
   };
 
   const navLinks = [

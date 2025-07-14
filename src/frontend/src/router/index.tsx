@@ -8,7 +8,8 @@ import PublicLayout from '../components/layout/PublicLayout';
 import DashboardPage from '../pages/DashboardPage';
 import PricingPage from '../pages/PricingPage';
 import UserCenterPage from '../pages/UserCenterPage';
-import HomePage from '../pages/HomePage'; // Import the new, correct landing page
+import HomePage from '../pages/HomePage';
+import * as authService from '../services/auth.service';
 
 // Layout for public-facing pages
 const PublicRoutes = () => (
@@ -24,6 +25,17 @@ const AppRoutes = () => (
   </MainLayout>
 );
 
+// Wrapper for the Pricing Page to select the correct layout based on auth state
+const PricingPageWrapper = () => {
+  const auth = authService.getAuthData();
+  const Layout = auth ? MainLayout : PublicLayout;
+  return (
+    <Layout>
+      <PricingPage />
+    </Layout>
+  );
+};
+
 const AppRouter = () => {
   return (
     <Router>
@@ -36,12 +48,14 @@ const AppRouter = () => {
         {/* Standalone Auth Page */}
         <Route path="/auth" element={<AuthPage />} />
 
+        {/* Pricing page with its own layout logic */}
+        <Route path="/pricing" element={<PricingPageWrapper />} />
+
         {/* Protected App Routes */}
         <Route element={<AppRoutes />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/templates" element={<TemplateLibraryPage />} />
           <Route path="/account" element={<UserCenterPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
         </Route>
         
         <Route path="/forms/:formId" element={<FormFillingPage />} />

@@ -4,6 +4,7 @@ import * as aiService from '../../../services/ai.service';
 import { useLanguage } from '../../../contexts/LanguageContext';
 
 interface SmartAssistantProps {
+  mode: 'fill' | 'create'; // 'fill' for filling an existing template, 'create' for making a new one
   onAutoFill: (extractedInfo: ExtractedInfoItem[]) => void;
   onAnalyzeForm: (file: File) => Promise<void>;
   isAnalyzing: boolean;
@@ -66,7 +67,7 @@ const FormAnalyzer = ({ onAnalyzeForm, isAnalyzing, analysisError }: {
 };
 
 
-const SmartAssistant = ({ onAutoFill, onAnalyzeForm, isAnalyzing, analysisError }: SmartAssistantProps) => {
+const SmartAssistant = ({ mode, onAutoFill, onAnalyzeForm, isAnalyzing, analysisError }: SmartAssistantProps) => {
   const { t } = useLanguage();
   const [text, setText] = useState('');
   const [extractedInfo, setExtractedInfo] = useState<ExtractedInfoItem[]>([]);
@@ -97,13 +98,15 @@ const SmartAssistant = ({ onAutoFill, onAnalyzeForm, isAnalyzing, analysisError 
     <div className="bg-white p-6 h-full flex flex-col">
       <h3 className="text-xl font-semibold text-text-primary mb-4">{t({ 'zh-HK': '智能助手', 'zh-CN': '智能助手', 'en': 'Smart Assistant' })}</h3>
       
-      <FormAnalyzer 
-        onAnalyzeForm={onAnalyzeForm}
-        isAnalyzing={isAnalyzing}
-        analysisError={analysisError}
-      />
+      {mode === 'create' && (
+        <FormAnalyzer 
+          onAnalyzeForm={onAnalyzeForm}
+          isAnalyzing={isAnalyzing}
+          analysisError={analysisError}
+        />
+      )}
       
-      <div className="border-t border-secondary/10 pt-4">
+      <div className={mode === 'create' ? "border-t border-secondary/10 pt-4" : ""}>
         <label className="block text-sm font-medium text-text-secondary mb-2">
           {t({ 'zh-HK': '自然語言輸入 (用於填充)', 'zh-CN': '自然语言输入 (用于填充)', 'en': 'Natural Language Input (for filling)' })}
         </label>

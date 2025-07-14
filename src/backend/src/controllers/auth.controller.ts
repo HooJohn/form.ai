@@ -35,7 +35,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // 4. Create and save the new user
-    const newUserProfileData: Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'> = {
+    const newUserProfileData: Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt' | 'subscriptionPlan'> = {
       email,
       hashedPassword,
       firstName,
@@ -64,6 +64,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
         firstName: newUser.firstName,
         lastName: newUser.lastName,
         role: newUser.role,
+        subscriptionPlan: newUser.subscriptionPlan,
       },
     });
   } catch (error) {
@@ -114,6 +115,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        subscriptionPlan: user.subscriptionPlan,
       },
     });
   } catch (error) {

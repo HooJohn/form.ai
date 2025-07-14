@@ -1,4 +1,4 @@
-import { UserProfile, UserRegistrationData } from '@backend/common/types';
+import { UserProfile, UserRegistrationData, SubscriptionPlan } from '../common/types';
 import { v4 as uuidv4 } from 'uuid';
 
 // In-memory array to simulate a database
@@ -27,10 +27,11 @@ export const findUserById = async (id: string): Promise<UserProfile | undefined>
  * @param userData The data for the new user.
  * @returns The newly created user profile.
  */
-export const createUser = async (userData: Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>): Promise<UserProfile> => {
+export const createUser = async (userData: Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt' | 'subscriptionPlan'>): Promise<UserProfile> => {
   const newUser: UserProfile = {
     id: uuidv4(),
     ...userData,
+    subscriptionPlan: SubscriptionPlan.FREE, // Default to Free plan
     createdAt: new Date(),
     updatedAt: new Date(),
   };

@@ -1,4 +1,4 @@
-import { UserRegistrationData, UserLoginData } from './../common/types';
+import { UserRegistrationData, UserLoginData, SubscriptionPlan, UserRole } from './../common/types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -9,7 +9,8 @@ interface AuthResponse {
     email: string;
     firstName?: string;
     lastName?: string;
-    role: string;
+    role: UserRole;
+    subscriptionPlan: SubscriptionPlan;
   };
 }
 

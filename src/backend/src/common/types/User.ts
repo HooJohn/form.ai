@@ -18,7 +18,7 @@ export interface UserProfile {
   lastLoginAt?: Date;
 
   // Subscription details
-  subscriptionPlan?: SubscriptionPlan;
+  subscriptionPlan: SubscriptionPlan;
   subscriptionStartDate?: Date;
   subscriptionEndDate?: Date;
   isSubscriptionActive?: boolean;
