@@ -1,7 +1,8 @@
 import { FormTemplate, ApplicationType } from '../common/types';
+import { v4 as uuidv4 } from 'uuid';
 
 // Mock Data based on the frontend prototype
-const mockTemplates: FormTemplate[] = [
+let mockTemplates: FormTemplate[] = [
   {
     id: 'template_001',
     schoolName: '保良局馬錦明夫人章馥仙中學',
@@ -52,23 +53,55 @@ const mockTemplates: FormTemplate[] = [
   },
 ];
 
-
 /**
  * Finds all form templates.
- * In a real app, this would support pagination, filtering, and searching.
- * @returns A list of all form templates.
  */
 export const findAllTemplates = async (): Promise<FormTemplate[]> => {
-  // Simulate async operation
   return Promise.resolve(mockTemplates);
 };
 
 /**
  * Finds a form template by its ID.
- * @param id The ID of the template to find.
- * @returns The template if found, otherwise undefined.
  */
 export const findTemplateById = async (id: string): Promise<FormTemplate | undefined> => {
-  // Simulate async operation
   return Promise.resolve(mockTemplates.find(t => t.id === id));
+};
+
+/**
+ * Creates a new form template.
+ */
+export const createTemplate = async (templateData: Omit<FormTemplate, 'id' | 'lastUpdated'>): Promise<FormTemplate> => {
+  const newTemplate: FormTemplate = {
+    id: uuidv4(),
+    ...templateData,
+    lastUpdated: new Date(),
+  };
+  mockTemplates.push(newTemplate);
+  return Promise.resolve(newTemplate);
+};
+
+/**
+ * Updates an existing form template.
+ */
+export const updateTemplate = async (id: string, updates: Partial<FormTemplate>): Promise<FormTemplate | undefined> => {
+  const templateIndex = mockTemplates.findIndex(t => t.id === id);
+  if (templateIndex === -1) {
+    return undefined;
+  }
+  const updatedTemplate = {
+    ...mockTemplates[templateIndex],
+    ...updates,
+    lastUpdated: new Date(),
+  };
+  mockTemplates[templateIndex] = updatedTemplate;
+  return Promise.resolve(updatedTemplate);
+};
+
+/**
+ * Deletes a form template.
+ */
+export const deleteTemplate = async (id: string): Promise<boolean> => {
+  const initialLength = mockTemplates.length;
+  mockTemplates = mockTemplates.filter(t => t.id !== id);
+  return Promise.resolve(mockTemplates.length < initialLength);
 };

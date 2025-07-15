@@ -1,5 +1,6 @@
-import { UserProfile, UserRegistrationData, SubscriptionPlan } from '../common/types';
+import { UserProfile, UserRegistrationData, SubscriptionPlan, UserRole } from '../common/types';
 import { v4 as uuidv4 } from 'uuid';
+import bcrypt from 'bcryptjs';
 
 // In-memory array to simulate a database
 const users: UserProfile[] = [];
@@ -64,4 +65,33 @@ export const updateUser = async (userId: string, updates: Partial<UserProfile>):
 // Helper function to see the users in memory (for debugging)
 export const getAllUsers = async (): Promise<UserProfile[]> => {
   return users;
+};
+
+/**
+ * Creates a default admin user if no admin exists.
+ * This should be called once on application startup.
+ */
+export const createAdminUserIfNotExists = async () => {
+  const adminExists = users.some(user => user.role === UserRole.SYSTEM_ADMIN);
+  if (!adminExists) {
+    console.log('No admin user found. Creating a default admin...');
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(process.env.ADMIN_DEFAULT_PASSWORD || 'admin123', salt);
+
+    const adminUser: UserProfile = {
+      id: uuidv4(),
+      email: process.env.ADMIN_DEFAULT_EMAIL || 'admin@form.ai',
+      hashedPassword,
+      firstName: 'Admin',
+      lastName: 'User',
+      preferredLanguage: 'en',
+      role: UserRole.SYSTEM_ADMIN,
+      subscriptionPlan: SubscriptionPlan.ENTERPRISE, // Admins get the highest tier
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    users.push(adminUser);
+    console.log(`Default admin created with email: ${adminUser.email}`);
+    console.log(`IMPORTANT: Use the password from your .env file (ADMIN_DEFAULT_PASSWORD) or the default 'admin123'.`);
+  }
 };

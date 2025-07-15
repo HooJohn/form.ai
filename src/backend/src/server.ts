@@ -10,10 +10,22 @@ const app: Express = express();
 const PORT = process.env.BACKEND_PORT || 3001;
 
 // Middleware
-// Configure CORS - Allow requests from frontend development server
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+// Configure CORS - Allow requests from both frontend development servers
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:3000',
+  process.env.ADMIN_FRONTEND_URL || 'http://localhost:3002',
+];
+
 app.use(cors({
-  origin: frontendUrl,
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   credentials: true, // If you need to handle cookies or authorization headers
 }));
 
@@ -30,7 +42,7 @@ app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'UP', message: 'Backend is healthy', timestamp: new Date().toISOString() });
 });
 
-// Placeholder for future API routes
+// API routes for the main application
 import authRoutes from './routes/auth.routes';
 import templateRoutes from './routes/template.routes';
 import formRoutes from './routes/form.routes';
@@ -47,6 +59,14 @@ app.use('/api/feedback', feedbackRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/files', fileRoutes);
+
+// API routes for the admin panel
+import adminUserRoutes from './routes/admin/user.routes';
+import adminDashboardRoutes from './routes/admin/dashboard.routes';
+import adminTemplateRoutes from './routes/admin/template.routes';
+app.use('/api/admin/users', adminUserRoutes);
+app.use('/api/admin/dashboard', adminDashboardRoutes);
+app.use('/api/admin/templates', adminTemplateRoutes);
 
 // Catch-all for 404 Not Found errors
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -66,10 +86,15 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   res.status(statusCode).json({ message });
 });
 
+import { createAdminUserIfNotExists } from './services/user.service';
+
 // Start the server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
+  // Ensure a default admin user exists on startup
+  await createAdminUserIfNotExists();
+
   console.log(`Backend server is running on http://localhost:${PORT}`);
-  console.log(`Allowed CORS origin: ${frontendUrl}`);
+  console.log(`Allowed CORS origins: ${allowedOrigins.join(', ')}`);
   console.log(`Current NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
 });
 
